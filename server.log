@@ -1,0 +1,296 @@
+PRAGMA journal_mode = WAL
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    is_admin INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+
+CREATE TABLE IF NOT EXISTS verification_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expiry DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+
+CREATE TABLE IF NOT EXISTS activities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    file_paths TEXT NOT NULL,
+    file_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_email) REFERENCES users(email)
+  )
+
+CREATE TABLE IF NOT EXISTS user_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT UNIQUE NOT NULL,
+    payment_status TEXT DEFAULT 'pending',
+    payment_proof_path TEXT,
+    submitted_at DATETIME,
+    approved_at DATETIME,
+    approved_by TEXT,
+    is_free_user INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_email) REFERENCES users(email)
+  )
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email);
+CREATE INDEX IF NOT EXISTS idx_activities_user_email ON activities(user_email);
+CREATE INDEX IF NOT EXISTS idx_user_payments_email ON user_payments(user_email);
+CREATE INDEX IF NOT EXISTS idx_user_payments_status ON user_payments(payment_status);
+数据库初始化完成！
+[2026-01-12 02:06:21] DEBUG Creating transport: nodemailer (7.0.11; +https://nodemailer.com/; SMTP/7.0.11[client:7.0.11])
+Server is running at http://localhost:3000
+SELECT * FROM users WHERE email = 'admin123'
+用户登录成功: admin123 (管理员)
+
+            SELECT 
+                p.id,
+                p.user_email,
+                p.payment_proof_path,
+                p.submitted_at,
+                u.first_name,
+                u.last_name
+            FROM user_payments p
+            LEFT JOIN users u ON p.user_email = u.email
+            WHERE p.payment_status = 'pending'
+            ORDER BY p.submitted_at ASC
+        
+
+            SELECT 
+                a.id,
+                a.user_email,
+                a.title,
+                a.description,
+                a.file_paths,
+                a.file_count,
+                a.created_at,
+                u.first_name,
+                u.last_name
+            FROM activities a
+            LEFT JOIN users u ON a.user_email = u.email
+            ORDER BY a.created_at DESC
+        
+
+            SELECT 
+                a.file_paths,
+                a.user_email,
+                u.first_name,
+                u.last_name
+            FROM activities a
+            LEFT JOIN users u ON a.user_email = u.email
+        
+
+            SELECT 
+                p.payment_proof_path,
+                p.user_email,
+                u.first_name,
+                u.last_name
+            FROM user_payments p
+            LEFT JOIN users u ON p.user_email = u.email
+            WHERE p.payment_proof_path IS NOT NULL
+        
+
+            SELECT 
+                p.id,
+                p.user_email,
+                p.payment_proof_path,
+                p.submitted_at,
+                u.first_name,
+                u.last_name
+            FROM user_payments p
+            LEFT JOIN users u ON p.user_email = u.email
+            WHERE p.payment_status = 'pending'
+            ORDER BY p.submitted_at ASC
+        
+
+            SELECT 
+                a.file_paths,
+                a.user_email,
+                u.first_name,
+                u.last_name
+            FROM activities a
+            LEFT JOIN users u ON a.user_email = u.email
+        
+
+            SELECT 
+                p.payment_proof_path,
+                p.user_email,
+                u.first_name,
+                u.last_name
+            FROM user_payments p
+            LEFT JOIN users u ON p.user_email = u.email
+            WHERE p.payment_proof_path IS NOT NULL
+        
+
+            SELECT 
+                p.id,
+                p.user_email,
+                p.payment_proof_path,
+                p.submitted_at,
+                u.first_name,
+                u.last_name
+            FROM user_payments p
+            LEFT JOIN users u ON p.user_email = u.email
+            WHERE p.payment_status = 'pending'
+            ORDER BY p.submitted_at ASC
+        
+
+========== 验证码 ==========
+邮箱: kennyhuang0119_test@gmail.com
+验证码: 51243
+有效期至: 2026/1/12 10:09:35
+=============================
+
+[2026-01-12 02:07:35] DEBUG Sending mail using SMTP/7.0.11[client:7.0.11]
+[2026-01-12 02:07:35] DEBUG [L8VDGJe8zg] Resolved smtp.exmail.qq.com as 112.60.20.192 [cache miss]
+[2026-01-12 02:07:35] INFO  [L8VDGJe8zg] Secure connection established to 112.60.20.192:465
+[2026-01-12 02:07:35] DEBUG [L8VDGJe8zg] S: 220 smtp.qq.com Esmtp QQ QMail Server
+[2026-01-12 02:07:35] DEBUG [L8VDGJe8zg] C: EHLO HuangdeMacBook-Air.local
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250-smtp.qq.com
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250-PIPELINING
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250-SIZE 73400320
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250-AUTH LOGIN PLAIN
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250-AUTH=LOGIN
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250-MAILCOMPRESS
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250 8BITMIME
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] SMTP handshake finished
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] C: AUTH PLAIN AHMyMzAwMjYwNTVAbWFpbC5ibmJ1LmVkdS5jbgAvKiBzZWNyZXQgKi8=
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 235 Authentication successful
+[2026-01-12 02:07:36] INFO  [L8VDGJe8zg] User "s230026055@mail.bnbu.edu.cn" authenticated
+[2026-01-12 02:07:36] INFO  Sending message <4a3e2055-83ff-65d8-ca8c-317eb2fe2737@mail.bnbu.edu.cn> to <kennyhuang0119_test@gmail.com>
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] C: MAIL FROM:<s230026055@mail.bnbu.edu.cn>
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] S: 250 Ok
+[2026-01-12 02:07:36] DEBUG [L8VDGJe8zg] C: RCPT TO:<kennyhuang0119_test@gmail.com>
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] S: 250 Ok
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] C: DATA
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] S: 354 End data with <CR><LF>.<CR><LF>
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] From: s230026055@mail.bnbu.edu.cn
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] To: kennyhuang0119_test@gmail.com
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] Subject: =?UTF-8?B?44CQ5Luj5Luj5YWx6I2j44CR6Ki75YaK6amX6K2J?=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg]  =?UTF-8?B?56K8?=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] Message-ID: <4a3e2055-83ff-65d8-ca8c-317eb2fe2737@mail.bnbu.edu.cn>
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] Content-Transfer-Encoding: quoted-printable
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] Date: Mon, 12 Jan 2026 02:07:35 +0000
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] MIME-Version: 1.0
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] Content-Type: text/html; charset=utf-8
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] 
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] 
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg]             <h2>=E6=AD=A1=E8=BF=8E=E8=A8=BB=E5=86=8A=E4=BB=A3=E4=BB=A3=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] =E5=85=B1=E8=8D=A3</h2>
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg]             <p>=E6=82=A8=E7=9A=84=E9=A9=97=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] =E8=AD=89=E7=A2=BC=E6=98=AF=EF=BC=9A<strong style=3D"font-size: 24px; =
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] color: #F58A42;">51243</strong></p>
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg]             <p>=E9=A9=97=E8=AD=89=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] =E7=A2=BC=E5=B0=87=E5=9C=A8 2 =E5=88=86=E9=90=98=E5=85=A7=E6=9C=89=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] =E6=95=88=EF=BC=8C=E8=AB=8B=E5=84=98=E5=BF=AB=E5=AE=8C=E6=88=90=E8=A8=BB=
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] =E5=86=8A=E3=80=82</p>
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg]        =20
+[2026-01-12 02:07:37] DEBUG [L8VDGJe8zg] .
+[2026-01-12 02:07:37] INFO  [L8VDGJe8zg] <840 bytes encoded mime message (source size 833 bytes)>
+[2026-01-12 02:07:38] DEBUG [L8VDGJe8zg] S: 250 Ok: queued as 
+[2026-01-12 02:07:38] DEBUG [L8VDGJe8zg] Closing connection to the server using "end"
+邮件发送成功: <4a3e2055-83ff-65d8-ca8c-317eb2fe2737@mail.bnbu.edu.cn>
+[2026-01-12 02:07:38] INFO  [L8VDGJe8zg] Connection closed
+SELECT * FROM users WHERE email = 'kennyhuang0119_test@gmail.com'
+
+        INSERT INTO users (first_name, last_name, email, password_hash)
+        VALUES ('mz', 'hhhhhhh', 'kennyhuang0119_test@gmail.com', '$2b$10$B5DrzVEhZdhTSa2cXCVJr.6zX'/*+28 bytes*/)
+    
+新用户注册: kennyhuang0119_test@gmail.com (ID: 24)
+SELECT is_admin FROM users WHERE email = 'kennyhuang0119_test@gmail.com'
+SELECT payment_status FROM user_payments WHERE user_email = 'kennyhuang0119_test@gmail.com'
+SELECT payment_status, submitted_at FROM user_payments WHERE user_email = 'kennyhuang0119_test@gmail.com'
+
+========== 验证码 ==========
+邮箱: test_s230026055@mail.bnbu.edu.cn
+验证码: 57140
+有效期至: 2026/1/12 10:10:13
+=============================
+
+[2026-01-12 02:08:13] DEBUG Sending mail using SMTP/7.0.11[client:7.0.11]
+[2026-01-12 02:08:13] DEBUG [jlJ9iL7PPBM] Resolved smtp.exmail.qq.com as 112.53.42.125 [cache hit]
+[2026-01-12 02:08:14] INFO  [jlJ9iL7PPBM] Secure connection established to 112.53.42.125:465
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 220 smtp.qq.com Esmtp QQ QMail Server
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] C: EHLO HuangdeMacBook-Air.local
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250-smtp.qq.com
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250-PIPELINING
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250-SIZE 73400320
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250-AUTH LOGIN PLAIN
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250-AUTH=LOGIN
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250-MAILCOMPRESS
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 250 8BITMIME
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] SMTP handshake finished
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] C: AUTH PLAIN AHMyMzAwMjYwNTVAbWFpbC5ibmJ1LmVkdS5jbgAvKiBzZWNyZXQgKi8=
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] S: 235 Authentication successful
+[2026-01-12 02:08:14] INFO  [jlJ9iL7PPBM] User "s230026055@mail.bnbu.edu.cn" authenticated
+[2026-01-12 02:08:14] INFO  Sending message <003f2f84-41e4-3975-9296-3d207f9f4ecd@mail.bnbu.edu.cn> to <test_s230026055@mail.bnbu.edu.cn>
+[2026-01-12 02:08:14] DEBUG [jlJ9iL7PPBM] C: MAIL FROM:<s230026055@mail.bnbu.edu.cn>
+[2026-01-12 02:08:15] DEBUG [jlJ9iL7PPBM] S: 250 Ok
+[2026-01-12 02:08:15] DEBUG [jlJ9iL7PPBM] C: RCPT TO:<test_s230026055@mail.bnbu.edu.cn>
+[2026-01-12 02:08:15] DEBUG [jlJ9iL7PPBM] S: 550 Mailbox not found or access denied
+[2026-01-12 02:08:15] DEBUG [jlJ9iL7PPBM] Closing connection to the server using "end"
+[2026-01-12 02:08:15] ERROR Send error for <003f2f84-41e4-3975-9296-3d207f9f4ecd@mail.bnbu.edu.cn>: Can't send mail - all recipients were rejected: 550 Mailbox not found or access denied
+[2026-01-12 02:08:15] ERROR Send Error: Can't send mail - all recipients were rejected: 550 Mailbox not found or access denied
+邮件发送失败: Error: Can't send mail - all recipients were rejected: 550 Mailbox not found or access denied
+    at SMTPConnection._formatError (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+    at SMTPConnection._actionRCPT (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:1685:28)
+    at SMTPConnection.<anonymous> (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:1638:30)
+    at SMTPConnection._processResponse (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:993:20)
+    at SMTPConnection._onData (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:774:14)
+    at SMTPConnection._onSocketData (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:195:44)
+    at TLSSocket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5) {
+  code: 'EENVELOPE',
+  response: '550 Mailbox not found or access denied',
+  responseCode: 550,
+  command: 'RCPT TO',
+  rejected: [ 'test_s230026055@mail.bnbu.edu.cn' ],
+  rejectedErrors: [
+    Error: Recipient command failed: 550 Mailbox not found or access denied
+        at SMTPConnection._formatError (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+        at SMTPConnection._actionRCPT (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:1671:24)
+        at SMTPConnection.<anonymous> (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:1638:30)
+        at SMTPConnection._processResponse (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:993:20)
+        at SMTPConnection._onData (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:774:14)
+        at SMTPConnection._onSocketData (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:195:44)
+        at TLSSocket.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+        at Readable.push (node:internal/streams/readable:390:5) {
+      code: 'EENVELOPE',
+      response: '550 Mailbox not found or access denied',
+      responseCode: 550,
+      command: 'RCPT TO',
+      recipient: 'test_s230026055@mail.bnbu.edu.cn'
+    }
+  ]
+}
+/Users/huang/Desktop/Generation Co-prosperity/server.js:154
+        console.log('邮件发送成功:', info.messageId);
+                                    ^
+
+TypeError: Cannot read properties of undefined (reading 'messageId')
+    at /Users/huang/Desktop/Generation Co-prosperity/server.js:154:37
+    at /Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/mailer/index.js:235:21
+    at /Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-transport/index.js:241:32
+    at callback (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:623:13)
+    at /Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:642:24
+    at SMTPConnection._actionRCPT (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:1688:24)
+    at SMTPConnection.<anonymous> (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:1638:30)
+    at SMTPConnection._processResponse (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:993:20)
+    at SMTPConnection._onData (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:774:14)
+    at SMTPConnection._onSocketData (/Users/huang/Desktop/Generation Co-prosperity/node_modules/nodemailer/lib/smtp-connection/index.js:195:44)
+
+Node.js v24.11.1

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>清除缓存测试</title>
+</head>
+<body>
+    <h1>测试页面</h1>
+    <button onclick="testConnection()">测试连接 3000 端口</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testConnection() {
+            const result = document.getElementById('result');
+            result.innerHTML = '测试中...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:3000/api/admin/all-activities');
+                const data = await response.json();
+                result.innerHTML = `<p style="color: green;">✅ 连接成功！</p><p>获取到 ${data.activities.length} 条活动记录</p>`;
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ 连接失败：${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

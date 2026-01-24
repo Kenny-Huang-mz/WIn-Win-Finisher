@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1764665919910",
+    "firstName": "测试",
+    "lastName": "用户",
+    "email": "test@test.com",
+    "password": "123456",
+    "createdAt": "2025-12-02T08:58:39.910Z"
+  },
+  {
+    "id": "1764665946871",
+    "firstName": "1",
+    "lastName": "1",
+    "email": "1@1",
+    "password": "1",
+    "createdAt": "2025-12-02T08:59:06.871Z"
+  },
+  {
+    "id": "1764669113595",
+    "firstName": "1",
+    "lastName": "1",
+    "email": "hmz@qq.com",
+    "password": "111",
+    "createdAt": "2025-12-02T09:51:53.595Z"
+  },
+  {
+    "id": "1764670694435",
+    "firstName": "1",
+    "lastName": "1",
+    "email": "s230026055@mail.bnbu.edu.cn",
+    "password": "123123",
+    "createdAt": "2025-12-02T10:18:14.435Z"
+  },
+  {
+    "id": "1764671248965",
+    "firstName": "铭禛",
+    "lastName": "黄",
+    "email": "kennyhuang0119@gmail.com",
+    "password": "123123",
+    "createdAt": "2025-12-02T10:27:28.965Z"
+  }
+]
