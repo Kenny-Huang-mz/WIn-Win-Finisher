@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
@@ -49,9 +50,37 @@ const upload = multer({
 // 验证码存储 (内存中，key: email, value: {code, expiry})
 const verificationCodes = new Map();
 
+// 固定20个跨代任务（用于活动提交校验）
+const INTERGENERATIONAL_TASKS = [
+    'Get to know an interesting, real story of an adult who is at least 40 years older than you.',
+    'Learn to cook one dish from an older adult who is at least 30 years older than you.',
+    'Take a walk in a park with a person who is at least 50 years older than you.',
+    'Play a card or chess game with two to three older adults who are at least 35 years older than you.',
+    'Ask a grandparent-like figure to talk about ONE old-time item (e.g., an old photo, an old watch, a retro walkman/music player, etc.) with you.',
+    "Get to know a grandparent's childhood story.",
+    'Sing a song with grandparents.',
+    'Design a (festival) card and give it to your grandparent(s).',
+    "Spend time with your or your friend's grandparents in a shopping mall or a coffee shop.",
+    'Grow a pot of plants with your grandparent(s).',
+    'Enjoy ice-cream with a grandparent or grandparent-like person.',
+    'Serve a grandparent or grandparent-like person a cup of tea.',
+    'Learn from a grandparent or grandparent-like person a kind of traditional craftsmanship.',
+    "Consult a grandparent-like figure for their best advice for one's health.",
+    "Consult a grandparent-like figure for their best advice for one's career.",
+    'Share one of your secrets with a grandparent.',
+    'When you feel sad, simply talk to your grandparent(s).',
+    'Share a happy moment with your grandparent(s).',
+    'Wear a funny dress with a person who is at least 40 years older than you, and take a photo together.',
+    'Share a joke with a grandparent or a person who is at least 60 years older than you.'
+];
+
 // 中间件
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString('utf8');
+    }
+}));
 
 // 生成5位数验证码
 function generateVerificationCode() {
@@ -74,6 +103,150 @@ const transporter = nodemailer.createTransport({
     debug: true,  // 开启调试模式
     logger: true  // 开启日志
 });
+
+// 微信支付配置（请通过环境变量提供真实参数）
+const WECHAT_PAY_CONFIG = {
+    appid: process.env.WECHAT_APPID || '',
+    mchid: process.env.WECHAT_MCHID || '',
+    serialNo: process.env.WECHAT_SERIAL_NO || '',
+    privateKeyPath: process.env.WECHAT_PRIVATE_KEY_PATH || '',
+    apiV3Key: process.env.WECHAT_API_V3_KEY || '',
+    notifyUrl: process.env.WECHAT_NOTIFY_URL || '',
+    platformCertPath: process.env.WECHAT_PLATFORM_CERT_PATH || '',
+    platformSerialNo: process.env.WECHAT_PLATFORM_SERIAL_NO || ''
+};
+
+const WECHAT_PAYMENT_AMOUNT_FEN = Number.parseInt(process.env.WECHAT_PAYMENT_AMOUNT_FEN || '9900', 10);
+const WECHAT_PAYMENT_CURRENCY = process.env.WECHAT_PAYMENT_CURRENCY || 'CNY';
+const WECHAT_PAYMENT_DESCRIPTION = process.env.WECHAT_PAYMENT_DESCRIPTION || 'IG Finisher Program 活动参加费';
+
+let cachedWechatPrivateKey = null;
+let cachedWechatPlatformPublicKey = null;
+
+function resolveFilePath(filePath) {
+    if (!filePath) return '';
+    return path.isAbsolute(filePath) ? filePath : path.join(__dirname, filePath);
+}
+
+function readFileUtf8(filePath) {
+    return fs.readFileSync(resolveFilePath(filePath), 'utf8');
+}
+
+function getWechatConfigErrors() {
+    const missing = [];
+    if (!WECHAT_PAY_CONFIG.appid) missing.push('WECHAT_APPID');
+    if (!WECHAT_PAY_CONFIG.mchid) missing.push('WECHAT_MCHID');
+    if (!WECHAT_PAY_CONFIG.serialNo) missing.push('WECHAT_SERIAL_NO');
+    if (!WECHAT_PAY_CONFIG.privateKeyPath) missing.push('WECHAT_PRIVATE_KEY_PATH');
+    if (!WECHAT_PAY_CONFIG.apiV3Key) missing.push('WECHAT_API_V3_KEY');
+    if (!WECHAT_PAY_CONFIG.notifyUrl) missing.push('WECHAT_NOTIFY_URL');
+    if (!WECHAT_PAY_CONFIG.platformCertPath) missing.push('WECHAT_PLATFORM_CERT_PATH');
+    if (!Number.isInteger(WECHAT_PAYMENT_AMOUNT_FEN) || WECHAT_PAYMENT_AMOUNT_FEN <= 0) {
+        missing.push('WECHAT_PAYMENT_AMOUNT_FEN(正整数)');
+    }
+    if (Buffer.byteLength(WECHAT_PAY_CONFIG.apiV3Key, 'utf8') !== 32) {
+        missing.push('WECHAT_API_V3_KEY(必须32字节)');
+    }
+    return missing;
+}
+
+function getWechatPrivateKey() {
+    if (!cachedWechatPrivateKey) {
+        cachedWechatPrivateKey = readFileUtf8(WECHAT_PAY_CONFIG.privateKeyPath);
+    }
+    return cachedWechatPrivateKey;
+}
+
+function getWechatPlatformPublicKey() {
+    if (!cachedWechatPlatformPublicKey) {
+        const certPem = readFileUtf8(WECHAT_PAY_CONFIG.platformCertPath);
+        cachedWechatPlatformPublicKey = crypto.createPublicKey(certPem);
+    }
+    return cachedWechatPlatformPublicKey;
+}
+
+function generateNonceStr() {
+    return crypto.randomBytes(16).toString('hex');
+}
+
+function generateOutTradeNo() {
+    const randomPart = crypto.randomBytes(4).toString('hex');
+    return `GCP${Date.now()}${randomPart}`.slice(0, 32);
+}
+
+function buildWechatAuthorization(method, canonicalUrl, bodyText = '') {
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const nonceStr = generateNonceStr();
+    const message = `${method}\n${canonicalUrl}\n${timestamp}\n${nonceStr}\n${bodyText}\n`;
+    const signer = crypto.createSign('RSA-SHA256');
+    signer.update(message);
+    signer.end();
+    const signature = signer.sign(getWechatPrivateKey(), 'base64');
+
+    return `WECHATPAY2-SHA256-RSA2048 mchid="${WECHAT_PAY_CONFIG.mchid}",nonce_str="${nonceStr}",timestamp="${timestamp}",serial_no="${WECHAT_PAY_CONFIG.serialNo}",signature="${signature}"`;
+}
+
+async function requestWechatApi(method, canonicalUrl, body = null) {
+    const bodyText = body ? JSON.stringify(body) : '';
+    const headers = {
+        Accept: 'application/json',
+        Authorization: buildWechatAuthorization(method, canonicalUrl, bodyText),
+        'User-Agent': 'generation-co-prosperity/1.0'
+    };
+
+    if (bodyText) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(`https://api.mch.weixin.qq.com${canonicalUrl}`, {
+        method,
+        headers,
+        body: bodyText || undefined
+    });
+
+    const text = await response.text();
+    let data = null;
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (error) {
+            data = null;
+        }
+    }
+
+    return { ok: response.ok, status: response.status, data, text };
+}
+
+function verifyWechatNotifySignature(rawBody, timestamp, nonce, signatureBase64) {
+    const message = `${timestamp}\n${nonce}\n${rawBody}\n`;
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update(message);
+    verifier.end();
+    return verifier.verify(getWechatPlatformPublicKey(), signatureBase64, 'base64');
+}
+
+function decryptWechatNotifyResource(resource) {
+    const cipherBuffer = Buffer.from(resource.ciphertext, 'base64');
+    const authTag = cipherBuffer.subarray(cipherBuffer.length - 16);
+    const encryptedData = cipherBuffer.subarray(0, cipherBuffer.length - 16);
+    const decipher = crypto.createDecipheriv(
+        'aes-256-gcm',
+        Buffer.from(WECHAT_PAY_CONFIG.apiV3Key, 'utf8'),
+        Buffer.from(resource.nonce, 'utf8')
+    );
+
+    if (resource.associated_data) {
+        decipher.setAAD(Buffer.from(resource.associated_data, 'utf8'));
+    }
+    decipher.setAuthTag(authTag);
+
+    const plainText = Buffer.concat([
+        decipher.update(encryptedData),
+        decipher.final()
+    ]).toString('utf8');
+
+    return JSON.parse(plainText);
+}
 
 // 数据库操作函数
 
@@ -150,6 +323,7 @@ app.post('/api/send-verification-code', (req, res) => {
         if (error) {
             console.error('邮件发送失败:', error);
             // 不返回500错误，继续执行测试模式
+            return;
         }
         console.log('邮件发送成功:', info.messageId);
     });
@@ -243,31 +417,37 @@ app.post('/api/login', (req, res) => {
 
 // 辅助函数：检查用户是否有活动权限
 function checkUserPermission(email) {
-    // 1. 检查是否是管理员
+    // 当前版本：活动免支付，登录用户可直接使用
     const userStmt = db.prepare('SELECT is_admin FROM users WHERE email = ?');
     const user = userStmt.get(email);
-    
-    if (user && user.is_admin === 1) {
-        return { hasPermission: true, isAdmin: true };
-    }
 
-    // 2. 检查是否是免费用户（@mail.bnbu.edu.cn 后缀）
-    if (email.endsWith('@mail.bnbu.edu.cn')) {
-        return { hasPermission: true, isFreeUser: true };
-    }
-
-    // 3. 查询支付状态
-    const stmt = db.prepare('SELECT payment_status FROM user_payments WHERE user_email = ?');
-    const payment = stmt.get(email);
-
-    if (!payment) {
-        return { hasPermission: false, needsPayment: true };
+    if (!user) {
+        return { hasPermission: false, needsLogin: true };
     }
 
     return {
-        hasPermission: payment.payment_status === 'approved',
-        paymentStatus: payment.payment_status
+        hasPermission: true,
+        noPaymentRequired: true,
+        isAdmin: user.is_admin === 1
     };
+}
+
+function upsertApprovedPaymentByWechat(userEmail, transactionId, note = null) {
+    const stmt = db.prepare(`
+        INSERT INTO user_payments (
+            user_email, payment_status, submitted_at, approved_at, approved_by, is_free_user, notes
+        )
+        VALUES (?, 'approved', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'wechat_pay', 0, ?)
+        ON CONFLICT(user_email) DO UPDATE SET
+            payment_status = 'approved',
+            submitted_at = CURRENT_TIMESTAMP,
+            approved_at = CURRENT_TIMESTAMP,
+            approved_by = 'wechat_pay',
+            is_free_user = 0,
+            notes = excluded.notes
+    `);
+    const notes = note || (transactionId ? `微信支付成功，交易号: ${transactionId}` : '微信支付成功');
+    stmt.run(userEmail, notes);
 }
 
 // 获取用户支付状态
@@ -276,49 +456,16 @@ app.get('/api/payment-status/:email', (req, res) => {
 
     try {
         const permission = checkUserPermission(email);
-        
-        if (permission.isFreeUser) {
-            // 免费用户，自动创建记录
-            const checkStmt = db.prepare('SELECT * FROM user_payments WHERE user_email = ?');
-            const existing = checkStmt.get(email);
-            
-            if (!existing) {
-                const insertStmt = db.prepare(`
-                    INSERT INTO user_payments (user_email, payment_status, is_free_user)
-                    VALUES (?, 'approved', 1)
-                `);
-                insertStmt.run(email);
-            }
-            
-            return res.json({
-                success: true,
-                hasPermission: true,
-                isFreeUser: true,
-                message: '您是学校用户，无需支付即可参加活动'
-            });
-        }
-
-        // 查询支付记录
-        const stmt = db.prepare('SELECT payment_status, submitted_at FROM user_payments WHERE user_email = ?');
-        const payment = stmt.get(email);
-
-        if (!payment) {
-            return res.json({
-                success: true,
-                hasPermission: false,
-                needsPayment: true,
-                message: '需要上传支付凭证'
-            });
+        if (!permission.hasPermission) {
+            return res.status(404).json({ success: false, message: '用戶不存在，請先登入' });
         }
 
         res.json({
             success: true,
-            hasPermission: payment.payment_status === 'approved',
-            paymentStatus: payment.payment_status,
-            submittedAt: payment.submitted_at,
-            message: payment.payment_status === 'approved' ? '已審核通過' :
-                     payment.payment_status === 'pending' ? '等待管理員審核' : 
-                     '需要上传支付凭证'
+            hasPermission: true,
+            needsPayment: false,
+            noPaymentRequired: true,
+            message: '目前活動免付費，登入後可直接參加'
         });
     } catch (error) {
         console.error('查询支付状态失败:', error);
@@ -326,51 +473,220 @@ app.get('/api/payment-status/:email', (req, res) => {
     }
 });
 
-// 上传支付凭证
-app.post('/api/submit-payment', upload.single('proof'), (req, res) => {
+// 创建微信支付 Native 订单（扫码支付）
+app.post('/api/wechat/create-order', async (req, res) => {
     const { userEmail } = req.body;
+    if (!userEmail) {
+        return res.status(400).json({ success: false, message: '請提供用戶郵箱' });
+    }
 
-    if (!userEmail || !req.file) {
-        return res.status(400).json({ success: false, message: '請提供完整資訊' });
+    const configErrors = getWechatConfigErrors();
+    if (configErrors.length > 0) {
+        return res.status(500).json({
+            success: false,
+            message: `微信支付配置不完整: ${configErrors.join(', ')}`
+        });
     }
 
     try {
-        // 检查是否已经有记录
-        const checkStmt = db.prepare('SELECT * FROM user_payments WHERE user_email = ?');
-        const existing = checkStmt.get(userEmail);
-
-        if (existing) {
-            // 更新记录
-            const updateStmt = db.prepare(`
-                UPDATE user_payments 
-                SET payment_proof_path = ?, submitted_at = CURRENT_TIMESTAMP, payment_status = 'pending'
-                WHERE user_email = ?
-            `);
-            updateStmt.run(req.file.filename, userEmail);
-        } else {
-            // 插入新记录
-            const insertStmt = db.prepare(`
-                INSERT INTO user_payments (user_email, payment_proof_path, submitted_at, payment_status)
-                VALUES (?, ?, CURRENT_TIMESTAMP, 'pending')
-            `);
-            insertStmt.run(userEmail, req.file.filename);
+        const user = findUserByEmail(userEmail);
+        if (!user) {
+            return res.status(404).json({ success: false, message: '用戶不存在，請先登入' });
         }
 
-        console.log(`支付凭证已提交: ${userEmail}`);
-        res.json({ success: true, message: '支付憑證已提交，請等待管理員審核' });
+        if (userEmail.endsWith('@mail.bnbu.edu.cn')) {
+            return res.json({
+                success: true,
+                hasPermission: true,
+                isFreeUser: true,
+                message: '學校用戶無需支付'
+            });
+        }
+
+        const permission = checkUserPermission(userEmail);
+        if (permission.hasPermission) {
+            return res.json({
+                success: true,
+                hasPermission: true,
+                alreadyPaid: true,
+                message: '您已完成支付，可直接使用活動功能'
+            });
+        }
+
+        const outTradeNo = generateOutTradeNo();
+        const orderBody = {
+            appid: WECHAT_PAY_CONFIG.appid,
+            mchid: WECHAT_PAY_CONFIG.mchid,
+            description: WECHAT_PAYMENT_DESCRIPTION,
+            out_trade_no: outTradeNo,
+            notify_url: WECHAT_PAY_CONFIG.notifyUrl,
+            attach: userEmail,
+            amount: {
+                total: WECHAT_PAYMENT_AMOUNT_FEN,
+                currency: WECHAT_PAYMENT_CURRENCY
+            }
+        };
+
+        const wechatResult = await requestWechatApi('POST', '/v3/pay/transactions/native', orderBody);
+        if (!wechatResult.ok || !wechatResult.data || !wechatResult.data.code_url) {
+            console.error('创建微信订单失败:', wechatResult.status, wechatResult.text);
+            return res.status(502).json({
+                success: false,
+                message: '微信下单失败，请稍后重试',
+                detail: wechatResult.data || wechatResult.text
+            });
+        }
+
+        const insertStmt = db.prepare(`
+            INSERT INTO payment_orders (
+                out_trade_no, user_email, description, amount_total, currency, status, code_url
+            )
+            VALUES (?, ?, ?, ?, ?, 'CREATED', ?)
+        `);
+        insertStmt.run(
+            outTradeNo,
+            userEmail,
+            WECHAT_PAYMENT_DESCRIPTION,
+            WECHAT_PAYMENT_AMOUNT_FEN,
+            WECHAT_PAYMENT_CURRENCY,
+            wechatResult.data.code_url
+        );
+
+        res.json({
+            success: true,
+            outTradeNo: outTradeNo,
+            codeUrl: wechatResult.data.code_url,
+            amount: WECHAT_PAYMENT_AMOUNT_FEN,
+            currency: WECHAT_PAYMENT_CURRENCY,
+            message: '請使用微信掃碼完成支付'
+        });
     } catch (error) {
-        console.error('提交支付凭证失败:', error);
-        res.status(500).json({ success: false, message: '提交失敗' });
+        console.error('创建微信支付订单异常:', error);
+        res.status(500).json({ success: false, message: '建立支付訂單失敗' });
     }
+});
+
+// 微信支付回调通知
+app.post('/api/wechat/notify', (req, res) => {
+    const configErrors = getWechatConfigErrors();
+    if (configErrors.length > 0) {
+        return res.status(500).json({ code: 'FAIL', message: '微信支付配置不完整' });
+    }
+
+    try {
+        const signature = req.headers['wechatpay-signature'];
+        const timestamp = req.headers['wechatpay-timestamp'];
+        const nonce = req.headers['wechatpay-nonce'];
+        const serial = req.headers['wechatpay-serial'];
+        const rawBody = req.rawBody || '';
+
+        if (!signature || !timestamp || !nonce || !serial) {
+            return res.status(400).json({ code: 'FAIL', message: '缺少微信签名头' });
+        }
+
+        if (WECHAT_PAY_CONFIG.platformSerialNo && serial !== WECHAT_PAY_CONFIG.platformSerialNo) {
+            return res.status(401).json({ code: 'FAIL', message: '平台证书序列号不匹配' });
+        }
+
+        const isSignatureValid = verifyWechatNotifySignature(rawBody, timestamp, nonce, signature);
+        if (!isSignatureValid) {
+            return res.status(401).json({ code: 'FAIL', message: '微信回调签名验证失败' });
+        }
+
+        const notifyBody = (req.body && typeof req.body === 'object') ? req.body : JSON.parse(rawBody);
+        if (!notifyBody.resource) {
+            return res.status(400).json({ code: 'FAIL', message: '回调数据缺少 resource' });
+        }
+
+        const paymentData = decryptWechatNotifyResource(notifyBody.resource);
+        const outTradeNo = paymentData.out_trade_no;
+        const transactionId = paymentData.transaction_id || null;
+        const tradeState = paymentData.trade_state || 'UNKNOWN';
+        const notifyJson = JSON.stringify(paymentData);
+        const order = db.prepare('SELECT user_email FROM payment_orders WHERE out_trade_no = ?').get(outTradeNo);
+        const userEmail = order ? order.user_email : paymentData.attach;
+
+        if (!outTradeNo || !userEmail) {
+            return res.status(400).json({ code: 'FAIL', message: '回调缺少订单关键信息' });
+        }
+
+        const amountTotal = paymentData.amount && Number.isInteger(paymentData.amount.total)
+            ? paymentData.amount.total
+            : WECHAT_PAYMENT_AMOUNT_FEN;
+        const paidAt = paymentData.success_time ? paymentData.success_time.replace('T', ' ').replace('Z', '') : null;
+
+        const tx = db.transaction(() => {
+            const existing = db.prepare('SELECT id FROM payment_orders WHERE out_trade_no = ?').get(outTradeNo);
+
+            if (existing) {
+                const updateStmt = db.prepare(`
+                    UPDATE payment_orders
+                    SET status = ?,
+                        transaction_id = ?,
+                        raw_notify = ?,
+                        paid_at = COALESCE(?, paid_at),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE out_trade_no = ?
+                `);
+                updateStmt.run(tradeState, transactionId, notifyJson, paidAt, outTradeNo);
+            } else {
+                const insertStmt = db.prepare(`
+                    INSERT INTO payment_orders (
+                        out_trade_no, user_email, description, amount_total, currency, status, transaction_id, raw_notify, paid_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `);
+                insertStmt.run(
+                    outTradeNo,
+                    userEmail,
+                    WECHAT_PAYMENT_DESCRIPTION,
+                    amountTotal,
+                    WECHAT_PAYMENT_CURRENCY,
+                    tradeState,
+                    transactionId,
+                    notifyJson,
+                    paidAt
+                );
+            }
+
+            if (tradeState === 'SUCCESS') {
+                upsertApprovedPaymentByWechat(userEmail, transactionId);
+            }
+        });
+
+        tx();
+
+        return res.json({ code: 'SUCCESS', message: '成功' });
+    } catch (error) {
+        console.error('处理微信支付回调失败:', error);
+        return res.status(500).json({ code: 'FAIL', message: '回調處理失敗' });
+    }
+});
+
+// 旧版手工上传凭证接口已下线，统一改为微信支付回调开通
+app.post('/api/submit-payment', (req, res) => {
+    res.status(410).json({
+        success: false,
+        message: '支付憑證上傳已下線，請使用微信支付完成支付'
+    });
 });
 
 // --- IG Finisher Program 活动API ---
 
 // 上传活动记录（添加权限检查）
 app.post('/api/activities', upload.array('files', 5), async (req, res) => {
-    const { title, description, userEmail } = req.body;
+    const { taskId, description, userEmail } = req.body;
+    const parsedTaskId = Number.parseInt(taskId, 10);
+    const taskTitle = Number.isInteger(parsedTaskId) && parsedTaskId >= 1 && parsedTaskId <= INTERGENERATIONAL_TASKS.length
+        ? INTERGENERATIONAL_TASKS[parsedTaskId - 1]
+        : null;
+    const title = taskTitle ? `Task ${parsedTaskId}: ${taskTitle}` : null;
 
-    if (!title || !description || !userEmail) {
+    if (!taskTitle) {
+        return res.status(400).json({ success: false, message: '請選擇有效的任務' });
+    }
+
+    if (!userEmail || !description || !title) {
         return res.status(400).json({ success: false, message: '請提供完整的活動資訊' });
     }
 
@@ -381,24 +697,23 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
     // 权限检查
     const permission = checkUserPermission(userEmail);
     if (!permission.hasPermission) {
-        if (permission.needsPayment) {
-            return res.status(403).json({ 
-                success: false, 
-                message: '您需要先上傳支付憑證才能參加活動',
-                needsPayment: true
-            });
-        } else if (permission.paymentStatus === 'pending') {
-            return res.status(403).json({ 
-                success: false, 
-                message: '您的支付憑證正在審核中，請耐心等待',
-                pending: true
-            });
-        } else {
-            return res.status(403).json({ 
-                success: false, 
-                message: '您暫時無權參加此活動' 
-            });
-        }
+        return res.status(403).json({ 
+            success: false, 
+            message: permission.needsLogin ? '請先登入後再參加活動' : '暫時無法參加活動',
+            needsLogin: Boolean(permission.needsLogin)
+        });
+    }
+
+    // 同一用户同一任务仅允许提交一次
+    const existingSubmission = db.prepare(`
+        SELECT id FROM activities WHERE user_email = ? AND task_id = ?
+    `).get(userEmail, parsedTaskId);
+
+    if (existingSubmission) {
+        return res.status(409).json({
+            success: false,
+            message: `您已提交過 Task ${parsedTaskId}，請選擇其他任務`
+        });
     }
 
     try {
@@ -408,11 +723,11 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
 
         // 插入数据库
         const stmt = db.prepare(`
-            INSERT INTO activities (user_email, title, description, file_paths, file_count)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO activities (user_email, task_id, title, description, file_paths, file_count)
+            VALUES (?, ?, ?, ?, ?, ?)
         `);
 
-        const result = stmt.run(userEmail, title, description, filePathsJson, filePaths.length);
+        const result = stmt.run(userEmail, parsedTaskId, title, description, filePathsJson, filePaths.length);
 
         console.log(`新活动记录: ${title} (用户: ${userEmail}, ID: ${result.lastInsertRowid})`);
 
@@ -456,7 +771,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
                                     <h3 style="color: #FF6B35; margin-top: 0;">📋 活動詳情</h3>
                                     <table style="width: 100%; border-collapse: collapse;">
                                         <tr>
-                                            <td style="padding: 8px 0; color: #666; font-weight: bold; width: 100px;">活動標題：</td>
+                                            <td style="padding: 8px 0; color: #666; font-weight: bold; width: 100px;">任務：</td>
                                             <td style="padding: 8px 0; color: #333;">${title}</td>
                                         </tr>
                                         <tr>
@@ -614,11 +929,36 @@ app.post('/api/admin/review-payment', (req, res) => {
 
 // 获取所有活动记录（管理员）
 app.get('/api/admin/all-activities', (req, res) => {
+    const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
+    const rawTaskId = typeof req.query.taskId === 'string' ? req.query.taskId.trim() : '';
+    const parsedTaskId = Number.parseInt(rawTaskId, 10);
+    const hasTaskIdFilter = Number.isInteger(parsedTaskId) && parsedTaskId >= 1 && parsedTaskId <= INTERGENERATIONAL_TASKS.length;
+
     try {
-        const stmt = db.prepare(`
+        const conditions = [];
+        const params = [];
+
+        if (keyword) {
+            const likeKeyword = `%${keyword}%`;
+            conditions.push(`(
+                LOWER(a.user_email) LIKE ?
+                OR LOWER(COALESCE(u.first_name, '') || COALESCE(u.last_name, '')) LIKE ?
+                OR LOWER(COALESCE(u.last_name, '') || COALESCE(u.first_name, '')) LIKE ?
+            )`);
+            params.push(likeKeyword, likeKeyword, likeKeyword);
+        }
+
+        if (hasTaskIdFilter) {
+            conditions.push('a.task_id = ?');
+            params.push(parsedTaskId);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+        const query = `
             SELECT 
                 a.id,
                 a.user_email,
+                a.task_id,
                 a.title,
                 a.description,
                 a.file_paths,
@@ -628,20 +968,125 @@ app.get('/api/admin/all-activities', (req, res) => {
                 u.last_name
             FROM activities a
             LEFT JOIN users u ON a.user_email = u.email
+            ${whereClause}
             ORDER BY a.created_at DESC
-        `);
+        `;
 
-        const activities = stmt.all();
+        const stmt = db.prepare(query);
+        const activities = stmt.all(...params);
 
         res.json({
             success: true,
-            activities: activities.map(act => ({
-                ...act,
-                file_paths: JSON.parse(act.file_paths)
-            }))
+            activities: activities.map(act => {
+                let taskId = act.task_id;
+                if (!taskId) {
+                    const match = /^Task\s+(\d+)\s*:/i.exec(act.title || '');
+                    if (match) {
+                        const parsed = Number.parseInt(match[1], 10);
+                        if (Number.isInteger(parsed) && parsed >= 1 && parsed <= INTERGENERATIONAL_TASKS.length) {
+                            taskId = parsed;
+                        }
+                    }
+                }
+
+                return {
+                    ...act,
+                    task_id: taskId || null,
+                    file_paths: JSON.parse(act.file_paths)
+                };
+            })
         });
     } catch (error) {
         console.error('查询所有活动失败:', error);
+        res.status(500).json({ success: false, message: '查詢失敗' });
+    }
+});
+
+// 获取用户任务完成进度（管理员）
+app.get('/api/admin/user-progress', (req, res) => {
+    try {
+        const usersStmt = db.prepare(`
+            SELECT id, first_name, last_name, email
+            FROM users
+            WHERE is_admin = 0
+            ORDER BY created_at DESC
+        `);
+        const users = usersStmt.all();
+
+        const progressStmt = db.prepare(`
+            SELECT 
+                user_email,
+                COUNT(DISTINCT task_id) AS completed_count,
+                MAX(created_at) AS last_submitted_at,
+                GROUP_CONCAT(DISTINCT task_id) AS completed_tasks
+            FROM activities
+            WHERE task_id IS NOT NULL
+            GROUP BY user_email
+        `);
+        const progressRows = progressStmt.all();
+
+        const progressMap = new Map();
+        progressRows.forEach(row => {
+            const completedTasks = row.completed_tasks
+                ? row.completed_tasks.split(',').map(v => Number.parseInt(v, 10)).filter(v => Number.isInteger(v)).sort((a, b) => a - b)
+                : [];
+            progressMap.set(row.user_email, {
+                completedCount: row.completed_count || 0,
+                lastSubmittedAt: row.last_submitted_at || null,
+                completedTasks
+            });
+        });
+
+        const result = users.map(user => {
+            const progress = progressMap.get(user.email) || { completedCount: 0, lastSubmittedAt: null, completedTasks: [] };
+            return {
+                userEmail: user.email,
+                userName: `${user.last_name || ''}${user.first_name || ''}` || user.email,
+                completedCount: progress.completedCount,
+                completedTasks: progress.completedTasks,
+                lastSubmittedAt: progress.lastSubmittedAt
+            };
+        });
+
+        res.json({ success: true, users: result });
+    } catch (error) {
+        console.error('查询用户进度失败:', error);
+        res.status(500).json({ success: false, message: '查詢失敗' });
+    }
+});
+
+// 获取任务统计（管理员）
+app.get('/api/admin/task-overview', (req, res) => {
+    try {
+        const statsStmt = db.prepare(`
+            SELECT
+                task_id,
+                COUNT(*) AS submission_count,
+                COUNT(DISTINCT user_email) AS user_count,
+                MAX(created_at) AS last_submitted_at
+            FROM activities
+            WHERE task_id IS NOT NULL
+            GROUP BY task_id
+        `);
+        const statsRows = statsStmt.all();
+        const statsMap = new Map();
+        statsRows.forEach(row => statsMap.set(row.task_id, row));
+
+        const tasks = INTERGENERATIONAL_TASKS.map((taskTitle, index) => {
+            const taskId = index + 1;
+            const stats = statsMap.get(taskId);
+            return {
+                taskId,
+                taskTitle,
+                submissionCount: stats ? stats.submission_count : 0,
+                userCount: stats ? stats.user_count : 0,
+                lastSubmittedAt: stats ? stats.last_submitted_at : null
+            };
+        });
+
+        res.json({ success: true, tasks });
+    } catch (error) {
+        console.error('查询任务统计失败:', error);
         res.status(500).json({ success: false, message: '查詢失敗' });
     }
 });

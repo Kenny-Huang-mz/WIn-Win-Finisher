@@ -40,11 +40,14 @@
         <!-- 标签页导航 -->
         <div class="bg-white rounded-lg shadow-lg mb-6">
             <div class="flex border-b">
-                <button onclick="switchAdminTab('payments')" id="tab-payments" class="admin-tab px-6 py-4 font-medium border-b-2 border-brand-orange text-brand-orange">
-                    ⏳ 待審核支付
-                </button>
-                <button onclick="switchAdminTab('activities')" id="tab-activities" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
+                <button onclick="switchAdminTab('activities')" id="tab-activities" class="admin-tab px-6 py-4 font-medium border-b-2 border-brand-orange text-brand-orange">
                     📋 所有活動記錄
+                </button>
+                <button onclick="switchAdminTab('users')" id="tab-users" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
+                    👥 用戶進度
+                </button>
+                <button onclick="switchAdminTab('tasks')" id="tab-tasks" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
+                    🧩 任務統計
                 </button>
                 <button onclick="switchAdminTab('files')" id="tab-files" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
                     📁 所有上傳文件
@@ -57,23 +60,8 @@
 
         <!-- 内容区域 -->
         <div id="content-area">
-            <!-- 待审核支付 -->
-            <div id="content-payments" class="tab-content">
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-brand-dark">待審核支付憑證</h2>
-                        <button onclick="loadPendingPayments()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
-                            🔄 刷新
-                        </button>
-                    </div>
-                    <div id="payments-list" class="space-y-4">
-                        <p class="text-gray-500 text-center py-8">加載中...</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- 所有活动记录 -->
-            <div id="content-activities" class="tab-content hidden">
+            <div id="content-activities" class="tab-content">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-brand-dark">所有活動記錄</h2>
@@ -81,21 +69,54 @@
                             🔄 刷新
                         </button>
                     </div>
-                    
-                    <!-- 搜索框 -->
-                    <div class="mb-6">
-                        <div class="relative">
-                            <input type="text" 
-                                   id="activity-search" 
-                                   placeholder="🔍 搜索用戶名或郵箱..." 
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">按用戶篩選（姓名/郵箱）</label>
+                            <input type="text" id="activity-search" placeholder="例如：alice 或 alice@mail.com"
                                    oninput="filterActivities()"
-                                   class="w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none">
-                            <span class="absolute left-4 top-3.5 text-gray-400 text-xl">🔍</span>
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none">
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">💡 提示：可以搜索用戶名（例如：Carle）或完整郵箱地址</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">按任務篩選（1-20）</label>
+                            <select id="activity-task-filter" onchange="filterActivities()"
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none bg-white">
+                                <option value="">全部任務</option>
+                            </select>
+                        </div>
                     </div>
-                    
+
                     <div id="activities-list" class="space-y-4">
+                        <p class="text-gray-500 text-center py-8">加載中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用戶進度 -->
+            <div id="content-users" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-brand-dark">用戶任務完成進度</h2>
+                        <button onclick="loadUserProgress()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
+                            🔄 刷新
+                        </button>
+                    </div>
+                    <div id="users-progress-list" class="space-y-4">
+                        <p class="text-gray-500 text-center py-8">加載中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任務統計 -->
+            <div id="content-tasks" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-brand-dark">任務提交統計（1-20）</h2>
+                        <button onclick="loadTaskOverview()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
+                            🔄 刷新
+                        </button>
+                    </div>
+                    <div id="tasks-overview-list" class="space-y-4">
                         <p class="text-gray-500 text-center py-8">加載中...</p>
                     </div>
                 </div>
@@ -121,7 +142,7 @@
                                    class="w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none">
                             <span class="absolute left-4 top-3.5 text-gray-400 text-xl">🔍</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">💡 提示：可以搜索用戶名或郵箱來過濾該用戶上傳的所有文件</p>
+                        <p class="text-xs text-gray-500 mt-2">💡 提示：可以搜索用戶名或郵箱來過濾文件</p>
                     </div>
                     
                     <div id="files-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -134,11 +155,37 @@
 
     <script>
         let adminUser = null;
+        let activitiesData = [];
+        let filesData = [];
+        const TASK_COUNT = 20;
+
+        function formatDateTime(dateString) {
+            return new Date(dateString + 'Z').toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        function initTaskFilterOptions() {
+            const taskFilter = document.getElementById('activity-task-filter');
+            if (!taskFilter) return;
+
+            for (let i = 1; i <= TASK_COUNT; i++) {
+                const option = document.createElement('option');
+                option.value = String(i);
+                option.textContent = `Task ${i}`;
+                taskFilter.appendChild(option);
+            }
+        }
 
         // 页面加载时验证管理员身份
         window.addEventListener('DOMContentLoaded', () => {
             const userInfo = sessionStorage.getItem('userInfo');
-            
+
             if (!userInfo) {
                 alert('請先登入！');
                 window.location.href = 'index.html';
@@ -153,358 +200,307 @@
                 return;
             }
 
-            // 显示管理员名称
             document.getElementById('admin-name').textContent = `${adminUser.lastName}${adminUser.firstName}`;
-
-            // 加载默认内容
-            loadPendingPayments();
+            initTaskFilterOptions();
+            loadAllActivities();
         });
 
-        // 登出
-        function logout() {
-            if (confirm('確定要登出嗎？')) {
+        function clearClientAuthState() {
+            try {
                 sessionStorage.removeItem('userInfo');
-                window.location.href = 'index.html';
+                sessionStorage.removeItem('adminUser');
+            } catch (error) {
+                console.warn('清理 sessionStorage 失敗:', error);
+            }
+
+            try {
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('adminUser');
+            } catch (error) {
+                console.warn('清理 localStorage 失敗:', error);
             }
         }
 
-        // 切换标签页
+        function logout() {
+            if (!confirm('確定要登出嗎？')) return;
+            clearClientAuthState();
+            window.location.replace('index.html?_logout=' + Date.now());
+        }
+
         function switchAdminTab(tabName) {
-            // 隐藏所有内容
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            // 重置所有标签样式
             document.querySelectorAll('.admin-tab').forEach(el => {
                 el.classList.remove('border-brand-orange', 'text-brand-orange');
                 el.classList.add('text-gray-600');
             });
 
-            // 显示选中的内容
             document.getElementById(`content-${tabName}`).classList.remove('hidden');
-            // 高亮选中的标签
             const activeTab = document.getElementById(`tab-${tabName}`);
             activeTab.classList.add('border-brand-orange', 'text-brand-orange');
             activeTab.classList.remove('text-gray-600');
 
-            // 加载对应数据
-            if (tabName === 'payments') loadPendingPayments();
-            else if (tabName === 'activities') loadAllActivities();
+            if (tabName === 'activities') loadAllActivities();
+            else if (tabName === 'users') loadUserProgress();
+            else if (tabName === 'tasks') loadTaskOverview();
             else if (tabName === 'files') loadAllFiles();
         }
 
-        // 加载待审核支付
-        async function loadPendingPayments() {
-            try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/pending-payments');
-                const data = await response.json();
-
-                const listContainer = document.getElementById('payments-list');
-
-                if (data.success && data.payments.length > 0) {
-                    listContainer.innerHTML = data.payments.map(payment => `
-                        <div class="border rounded-lg p-6 hover:shadow-md transition">
-                            <div class="flex flex-col md:flex-row gap-6">
-                                <div class="flex-shrink-0">
-                                    <img src="http://127.0.0.1:3000/uploads/${payment.payment_proof_path}" 
-                                         alt="支付憑證" 
-                                         class="w-64 h-64 object-cover rounded-lg border-2 cursor-pointer hover:opacity-80"
-                                         onclick="window.open('http://127.0.0.1:3000/uploads/${payment.payment_proof_path}', '_blank')">
-                                    <p class="text-xs text-gray-500 text-center mt-2">點擊查看大圖</p>
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="text-xl font-bold text-brand-dark mb-4">
-                                        ${payment.last_name || ''}${payment.first_name || ''} 的支付憑證
-                                    </h3>
-                                    <div class="space-y-2 mb-6">
-                                        <p class="text-gray-700"><span class="font-medium">📧 郵箱：</span>${payment.user_email}</p>
-                                        <p class="text-gray-700"><span class="font-medium">📅 提交時間：</span>${new Date(payment.submitted_at).toLocaleString('zh-TW')}</p>
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium mb-2">審核備註（可選）</label>
-                                        <input type="text" id="notes-${payment.user_email}" placeholder="例如：付款金額正確" class="w-full px-4 py-2 border rounded-lg">
-                                    </div>
-                                    <div class="flex gap-4">
-                                        <button onclick="reviewPayment('${payment.user_email}', 'approve')" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700">
-                                            ✅ 批准
-                                        </button>
-                                        <button onclick="reviewPayment('${payment.user_email}', 'reject')" class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700">
-                                            ❌ 拒絕
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">✅ 暫無待審核的支付憑證</p>';
-                }
-            } catch (error) {
-                console.error('加載失敗:', error);
-                document.getElementById('payments-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
-            }
-        }
-
-        // 审核支付
-        async function reviewPayment(userEmail, action) {
-            const notesInput = document.getElementById(`notes-${userEmail}`);
-            const notes = notesInput ? notesInput.value : '';
-
-            if (!confirm(`確定要${action === 'approve' ? '批准' : '拒絕'} ${userEmail} 的支付憑證嗎？`)) return;
-
-            try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/review-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userEmail: userEmail,
-                        action: action,
-                        notes: notes,
-                        adminEmail: adminUser.email
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert(data.message);
-                    loadPendingPayments();
-                } else {
-                    alert(data.message || '操作失敗');
-                }
-            } catch (error) {
-                console.error('審核失敗:', error);
-                alert('審核失敗');
-            }
-        }
-
-        // 加载所有活动记录
         async function loadAllActivities() {
-            try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/all-activities');
-                const data = await response.json();
+            const keyword = document.getElementById('activity-search').value.trim();
+            const taskId = document.getElementById('activity-task-filter').value;
+            const params = new URLSearchParams();
+            if (keyword) params.set('keyword', keyword);
+            if (taskId) params.set('taskId', taskId);
 
+            try {
+                const response = await fetch(`http://127.0.0.1:3000/api/admin/all-activities?${params.toString()}`);
+                const data = await response.json();
                 const listContainer = document.getElementById('activities-list');
 
                 if (data.success && data.activities.length > 0) {
+                    activitiesData = data.activities;
                     listContainer.innerHTML = data.activities.map((act, index) => `
-                        <div class="border rounded-lg p-6 hover:shadow-md transition" id="activity-${index}">
-                            <div class="flex justify-between items-start mb-4">
+                        <div class="border rounded-lg p-6 hover:shadow-md transition">
+                            <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3 mb-4">
                                 <div>
-                                    <h3 class="text-xl font-bold text-brand-dark">${act.title}</h3>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        👤 ${act.last_name || ''}${act.first_name || ''} (${act.user_email})
-                                    </p>
+                                    <h3 class="text-lg font-bold text-brand-dark">${act.title}</h3>
+                                    <p class="text-sm text-gray-500 mt-1">👤 ${act.last_name || ''}${act.first_name || ''} (${act.user_email})</p>
                                 </div>
-                                <span class="text-sm text-gray-500">
-                                    📅 ${new Date(act.created_at + 'Z').toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
-                                </span>
+                                <div class="text-sm text-gray-500">
+                                    <p>🧩 Task ${act.task_id || '-'}</p>
+                                    <p>📅 ${formatDateTime(act.created_at)}</p>
+                                </div>
                             </div>
                             <p class="text-gray-700 mb-4">${act.description}</p>
                             <div class="flex items-center gap-4 text-sm text-gray-600">
                                 <span>📎 ${act.file_count} 個檔案</span>
-                                <button onclick="viewActivityFiles(${index})" class="text-brand-orange hover:underline">
-                                    查看檔案 →
-                                </button>
+                                <button onclick="viewActivityFiles(${index})" class="text-brand-orange hover:underline">查看檔案</button>
                             </div>
+                            <div id="activity-files-${index}" class="hidden mt-4 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
                         </div>
                     `).join('');
-                    
-                    // 保存活动数据以便查看文件
-                    window.activitiesData = data.activities;
                 } else {
-                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">暫無活動記錄</p>';
+                    activitiesData = [];
+                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">暫無符合條件的活動記錄</p>';
                 }
             } catch (error) {
-                console.error('加載失敗:', error);
+                console.error('加載活動失敗:', error);
                 document.getElementById('activities-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
             }
         }
 
-        // 查看活动文件
+        function filterActivities() {
+            loadAllActivities();
+        }
+
         function viewActivityFiles(activityIndex) {
-            if (!window.activitiesData || !window.activitiesData[activityIndex]) {
+            if (!activitiesData[activityIndex]) {
                 alert('無法獲取活動數據');
                 return;
             }
 
-            const activity = window.activitiesData[activityIndex];
-            const filePaths = activity.file_paths;
+            const activity = activitiesData[activityIndex];
+            const filePaths = activity.file_paths || [];
+            const container = document.getElementById(`activity-files-${activityIndex}`);
 
-            if (!filePaths || filePaths.length === 0) {
+            if (!container) return;
+
+            // 点击同一条记录时可展开/收起
+            if (!container.classList.contains('hidden')) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            if (filePaths.length === 0) {
                 alert('該活動沒有上傳文件');
                 return;
             }
 
-            const fileList = filePaths.map(f => `http://127.0.0.1:3000/uploads/${f}`).join('\n');
-            
-            if (confirm(`該活動共有 ${filePaths.length} 個文件。點擊確定在新窗口打開所有文件。\n\n${fileList}`)) {
-                filePaths.forEach(f => window.open(`http://127.0.0.1:3000/uploads/${f}`, '_blank'));
-            }
-        }
+            container.innerHTML = filePaths.map(filename => {
+                const fileUrl = `http://127.0.0.1:3000/uploads/${encodeURIComponent(filename)}`;
+                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filename);
+                const isVideo = /\.(mp4|mov|avi|webm)$/i.test(filename);
 
-        // 搜索过滤活动
-        function filterActivities() {
-            const searchInput = document.getElementById('activity-search');
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            
-            if (!window.activitiesData) return;
-
-            const listContainer = document.getElementById('activities-list');
-            
-            // 过滤活动数据
-            const filteredActivities = window.activitiesData.filter(act => {
-                const userName = `${act.last_name || ''}${act.first_name || ''}`.toLowerCase();
-                const userEmail = (act.user_email || '').toLowerCase();
-                
-                return userName.includes(searchTerm) || userEmail.includes(searchTerm);
-            });
-
-            // 显示过滤后的结果
-            if (filteredActivities.length > 0) {
-                listContainer.innerHTML = filteredActivities.map((act, index) => {
-                    // 找到原始索引
-                    const originalIndex = window.activitiesData.indexOf(act);
-                    
+                if (isImage) {
                     return `
-                        <div class="border rounded-lg p-6 hover:shadow-md transition" id="activity-${originalIndex}">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="text-xl font-bold text-brand-dark">${act.title}</h3>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        👤 ${act.last_name || ''}${act.first_name || ''} (${act.user_email})
-                                    </p>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    📅 ${new Date(act.created_at + 'Z').toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
-                                </span>
-                            </div>
-                            <p class="text-gray-700 mb-4">${act.description}</p>
-                            <div class="flex items-center gap-4 text-sm text-gray-600">
-                                <span>📎 ${act.file_count} 個檔案</span>
-                                <button onclick="viewActivityFiles(${originalIndex})" class="text-brand-orange hover:underline">
-                                    查看檔案 →
-                                </button>
-                            </div>
+                        <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="block border rounded-lg overflow-hidden bg-gray-50">
+                            <img src="${fileUrl}" alt="${filename}" class="w-full h-40 object-cover">
+                            <p class="text-xs text-gray-600 px-2 py-1 truncate">${filename}</p>
+                        </a>
+                    `;
+                }
+
+                if (isVideo) {
+                    return `
+                        <div class="border rounded-lg overflow-hidden bg-gray-50">
+                            <video src="${fileUrl}" controls class="w-full h-40 object-cover bg-black"></video>
+                            <p class="text-xs text-gray-600 px-2 py-1 truncate">${filename}</p>
                         </div>
                     `;
-                }).join('');
-            } else {
-                listContainer.innerHTML = `
-                    <p class="text-gray-500 text-center py-8">
-                        🔍 沒有找到匹配"${searchTerm}"的活動記錄
-                    </p>
+                }
+
+                return `
+                    <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="border rounded-lg p-3 bg-gray-50 hover:bg-gray-100">
+                        <p class="text-2xl mb-2">📄</p>
+                        <p class="text-xs text-gray-600 truncate">${filename}</p>
+                    </a>
                 `;
-            }
+            }).join('');
+
+            container.classList.remove('hidden');
         }
 
-        // 加载所有文件
-        async function loadAllFiles() {
+        function jumpToUserActivities(email) {
+            document.getElementById('activity-search').value = email;
+            document.getElementById('activity-task-filter').value = '';
+            switchAdminTab('activities');
+        }
+
+        function jumpToTaskActivities(taskId) {
+            document.getElementById('activity-search').value = '';
+            document.getElementById('activity-task-filter').value = String(taskId);
+            switchAdminTab('activities');
+        }
+
+        async function loadUserProgress() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/all-files');
+                const response = await fetch('http://127.0.0.1:3000/api/admin/user-progress');
                 const data = await response.json();
+                const container = document.getElementById('users-progress-list');
 
-                const gridContainer = document.getElementById('files-grid');
-
-                if (data.success && data.files.length > 0) {
-                    // 保存文件数据供搜索使用
-                    window.filesData = data.files;
-                    
-                    gridContainer.innerHTML = data.files.map(file => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.filename);
-                        const isVideo = /\.(mp4|mov|avi|webm)$/i.test(file.filename);
-                        const fileSize = (file.size / 1024).toFixed(1);
-                        const fileType = file.isPaymentProof ? '💳 支付憑證' : '📁 活動文件';
+                if (data.success && data.users.length > 0) {
+                    container.innerHTML = data.users.map(user => {
+                        const percent = Math.round((user.completedCount / TASK_COUNT) * 100);
+                        const completedTasks = user.completedTasks.length > 0
+                            ? user.completedTasks.map(t => `<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">T${t}</span>`).join(' ')
+                            : '<span class="text-gray-400 text-sm">尚未提交</span>';
 
                         return `
-                            <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer" 
-                                 onclick="window.open('http://127.0.0.1:3000/uploads/${file.filename}', '_blank')"
-                                 data-username="${file.userName}"
-                                 data-email="${file.userEmail}">
-                                ${isImage ? `
-                                    <img src="http://127.0.0.1:3000/uploads/${file.filename}" class="w-full h-48 object-cover rounded-lg mb-2" alt="${file.filename}">
-                                ` : isVideo ? `
-                                    <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                                        <span class="text-6xl">🎥</span>
+                            <div class="border rounded-lg p-4">
+                                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3">
+                                    <div>
+                                        <p class="font-bold text-brand-dark">${user.userName}</p>
+                                        <p class="text-sm text-gray-500">${user.userEmail}</p>
                                     </div>
-                                ` : `
-                                    <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                                        <span class="text-6xl">📄</span>
+                                    <div class="text-sm text-gray-600">
+                                        <p>完成度：${user.completedCount}/${TASK_COUNT} (${percent}%)</p>
+                                        <p>最近提交：${user.lastSubmittedAt ? formatDateTime(user.lastSubmittedAt) : '—'}</p>
                                     </div>
-                                `}
-                                <p class="text-xs text-gray-600 truncate mb-1" title="${file.filename}">${file.filename}</p>
-                                <p class="text-xs text-gray-500">${fileSize} KB</p>
-                                <div class="mt-2 pt-2 border-t">
-                                    <p class="text-xs text-brand-orange font-medium">${fileType}</p>
-                                    <p class="text-xs text-gray-600 truncate" title="${file.userName}">👤 ${file.userName}</p>
-                                    <p class="text-xs text-gray-500 truncate" title="${file.userEmail}">📧 ${file.userEmail}</p>
                                 </div>
+                                <div class="w-full bg-gray-200 rounded h-2 mb-3">
+                                    <div class="bg-brand-orange h-2 rounded" style="width: ${percent}%"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mb-3">${completedTasks}</div>
+                                <button data-email="${user.userEmail}" onclick="jumpToUserActivities(this.dataset.email)" class="text-sm text-brand-orange hover:underline">
+                                    查看該用戶提交 →
+                                </button>
                             </div>
                         `;
                     }).join('');
                 } else {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無用戶進度數據</p>';
+                }
+            } catch (error) {
+                console.error('加載用戶進度失敗:', error);
+                document.getElementById('users-progress-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
+            }
+        }
+
+        async function loadTaskOverview() {
+            try {
+                const response = await fetch('http://127.0.0.1:3000/api/admin/task-overview');
+                const data = await response.json();
+                const container = document.getElementById('tasks-overview-list');
+
+                if (data.success && data.tasks.length > 0) {
+                    container.innerHTML = data.tasks.map(task => `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+                                <div>
+                                    <p class="font-bold text-brand-dark">Task ${task.taskId}</p>
+                                    <p class="text-sm text-gray-600 mt-1">${task.taskTitle}</p>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    <p>提交數：${task.submissionCount}</p>
+                                    <p>參與人數：${task.userCount}</p>
+                                    <p>最近提交：${task.lastSubmittedAt ? formatDateTime(task.lastSubmittedAt) : '—'}</p>
+                                </div>
+                            </div>
+                            <button onclick="jumpToTaskActivities(${task.taskId})" class="mt-3 text-sm text-brand-orange hover:underline">
+                                查看此任務所有提交 →
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無任務統計數據</p>';
+                }
+            } catch (error) {
+                console.error('加載任務統計失敗:', error);
+                document.getElementById('tasks-overview-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
+            }
+        }
+
+        async function loadAllFiles() {
+            try {
+                const response = await fetch('http://127.0.0.1:3000/api/admin/all-files');
+                const data = await response.json();
+                const gridContainer = document.getElementById('files-grid');
+
+                if (data.success && data.files.length > 0) {
+                    filesData = data.files;
+                    renderFiles(filesData);
+                } else {
+                    filesData = [];
                     gridContainer.innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">暫無上傳文件</p>';
                 }
             } catch (error) {
-                console.error('加載失敗:', error);
+                console.error('加載文件失敗:', error);
                 document.getElementById('files-grid').innerHTML = '<p class="text-red-500 text-center py-8 col-span-full">加載失敗</p>';
             }
         }
 
-        // 搜索过滤文件
-        function filterFiles() {
-            const searchInput = document.getElementById('file-search');
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            
-            if (!window.filesData) return;
-
+        function renderFiles(sourceFiles) {
             const gridContainer = document.getElementById('files-grid');
-            
-            // 过滤文件数据
-            const filteredFiles = window.filesData.filter(file => {
+            gridContainer.innerHTML = sourceFiles.map(file => {
+                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.filename);
+                const isVideo = /\.(mp4|mov|avi|webm)$/i.test(file.filename);
+                const fileSize = (file.size / 1024).toFixed(1);
+
+                return `
+                    <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer"
+                         onclick="window.open('http://127.0.0.1:3000/uploads/${file.filename}', '_blank')">
+                        ${isImage ? `
+                            <img src="http://127.0.0.1:3000/uploads/${file.filename}" class="w-full h-48 object-cover rounded-lg mb-2" alt="${file.filename}">
+                        ` : isVideo ? `
+                            <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center"><span class="text-6xl">🎥</span></div>
+                        ` : `
+                            <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center"><span class="text-6xl">📄</span></div>
+                        `}
+                        <p class="text-xs text-gray-600 truncate mb-1" title="${file.filename}">${file.filename}</p>
+                        <p class="text-xs text-gray-500">${fileSize} KB</p>
+                        <div class="mt-2 pt-2 border-t">
+                            <p class="text-xs text-gray-600 truncate" title="${file.userName}">👤 ${file.userName}</p>
+                            <p class="text-xs text-gray-500 truncate" title="${file.userEmail}">📧 ${file.userEmail}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterFiles() {
+            const searchTerm = document.getElementById('file-search').value.toLowerCase().trim();
+            if (!filesData.length) return;
+
+            const filteredFiles = filesData.filter(file => {
                 const userName = (file.userName || '').toLowerCase();
                 const userEmail = (file.userEmail || '').toLowerCase();
-                
                 return userName.includes(searchTerm) || userEmail.includes(searchTerm);
             });
 
-            // 显示过滤后的结果
             if (filteredFiles.length > 0) {
-                gridContainer.innerHTML = filteredFiles.map(file => {
-                    const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.filename);
-                    const isVideo = /\.(mp4|mov|avi|webm)$/i.test(file.filename);
-                    const fileSize = (file.size / 1024).toFixed(1);
-                    const fileType = file.isPaymentProof ? '💳 支付憑證' : '📁 活動文件';
-
-                    return `
-                        <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer" 
-                             onclick="window.open('http://127.0.0.1:3000/uploads/${file.filename}', '_blank')"
-                             data-username="${file.userName}"
-                             data-email="${file.userEmail}">
-                            ${isImage ? `
-                                <img src="http://127.0.0.1:3000/uploads/${file.filename}" class="w-full h-48 object-cover rounded-lg mb-2" alt="${file.filename}">
-                            ` : isVideo ? `
-                                <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                                    <span class="text-6xl">🎥</span>
-                                </div>
-                            ` : `
-                                <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                                    <span class="text-6xl">📄</span>
-                                </div>
-                            `}
-                            <p class="text-xs text-gray-600 truncate mb-1" title="${file.filename}">${file.filename}</p>
-                            <p class="text-xs text-gray-500">${fileSize} KB</p>
-                            <div class="mt-2 pt-2 border-t">
-                                <p class="text-xs text-brand-orange font-medium">${fileType}</p>
-                                <p class="text-xs text-gray-600 truncate" title="${file.userName}">👤 ${file.userName}</p>
-                                <p class="text-xs text-gray-500 truncate" title="${file.userEmail}">📧 ${file.userEmail}</p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                renderFiles(filteredFiles);
             } else {
-                gridContainer.innerHTML = `
-                    <p class="text-gray-500 text-center py-8 col-span-full">
-                        🔍 沒有找到匹配"${searchTerm}"的文件
-                    </p>
-                `;
+                document.getElementById('files-grid').innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">🔍 沒有找到匹配文件</p>';
             }
         }
     </script>

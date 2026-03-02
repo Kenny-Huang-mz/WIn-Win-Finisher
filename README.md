@@ -6,14 +6,19 @@
 ## 技术栈
 - **前端**: HTML5 + Tailwind CSS + Vanilla JavaScript
 - **后端**: Node.js + Express
+- **数据库**: SQLite (better-sqlite3)
 - **邮件服务**: Nodemailer
+- **支付**: 微信支付 API v3（Native 扫码）
 
 ## 功能特性
 ✅ 响应式设计，适配桌面端和移动端  
 ✅ 会员注册与登录系统  
 ✅ **邮箱验证码功能**（5位数字，2分钟有效期）  
 ✅ 倒计时重发功能  
-✅ 用户数据本地存储（JSON 文件）
+✅ 用户数据本地存储（SQLite）  
+✅ 登录后可直接参加活动（当前版本免支付）
+✅ IG Finisher Program 固定 20 项任务提交（按 Task 选择）  
+✅ 管理员支持按用户/按任务查看提交与完成进度
 
 ---
 
@@ -39,6 +44,32 @@ python3 -m http.server 8080
 
 ### 4. 访问网站
 打开浏览器访问：`http://localhost:8080`
+
+---
+
+## 微信支付配置（可选）
+
+> 当前版本已关闭支付门槛，**不配置微信支付也可正常使用活动功能**。  
+> 下面配置仅在你未来重新启用微信支付时需要。
+
+请在启动后端前配置以下环境变量（微信支付 API v3）：
+
+```bash
+export WECHAT_APPID="你的AppID"
+export WECHAT_MCHID="你的商户号"
+export WECHAT_SERIAL_NO="你的商户证书序列号"
+export WECHAT_PRIVATE_KEY_PATH="/绝对路径/apiclient_key.pem"
+export WECHAT_API_V3_KEY="32字节APIv3Key"
+export WECHAT_NOTIFY_URL="https://你的公网域名/api/wechat/notify"
+export WECHAT_PLATFORM_CERT_PATH="/绝对路径/wechatpay_platform_cert.pem"
+export WECHAT_PLATFORM_SERIAL_NO="平台证书序列号(可选但建议)"
+export WECHAT_PAYMENT_AMOUNT_FEN="9900"
+```
+
+说明：
+- `WECHAT_NOTIFY_URL` 必须是微信服务器可访问的公网 HTTPS 地址（本地 `localhost` 回调无效）
+- 普通用户支付成功后，系统根据微信回调自动写入 `approved`，无需人工审核
+- 学校邮箱（`@mail.bnbu.edu.cn`）仍为免费通道
 
 ---
 

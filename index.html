@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>代代共荣 Generation Co-prosperity</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -111,9 +112,11 @@
                         <button onclick="openModal('register')" class="text-brand-orange hover:text-orange-600 px-2">會員註冊</button>
                     </div>
                     <!-- 登录成功后显示的用户信息 (默认隐藏) -->
-                    <div id="user-info-desktop" class="hidden text-sm font-medium flex items-center gap-2">
-                        <span class="text-gray-600">歡迎您, <span id="username-display" class="font-bold text-brand-orange">會員</span></span>
-                        <button onclick="logout()" class="text-xs text-gray-400 hover:text-gray-600 underline">登出</button>
+                    <div id="user-info-desktop" class="hidden text-sm font-medium flex items-center gap-2 max-w-full">
+                        <span class="text-gray-600 min-w-0">
+                            歡迎您, <span id="username-display" class="font-bold text-brand-orange inline-block max-w-[220px] align-bottom truncate" title="會員">會員</span>
+                        </span>
+                        <button id="logout-btn-desktop" type="button" class="shrink-0 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 underline">登出</button>
                     </div>
 
                     <div class="flex items-center gap-4 mt-1">
@@ -292,40 +295,27 @@
                         <div class="text-4xl">⚠️</div>
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-yellow-800 mb-2">需要支付參加費</h3>
-                            <p class="text-gray-700 mb-4" id="payment-message">參加本活動需要支付費用，請掃描下方二維碼完成支付。</p>
-                            
-                            <!-- 微信支付二维码 -->
-                            <div class="bg-white rounded-lg p-6 text-center mb-4">
-                                <p class="text-gray-600 mb-3 font-medium">請使用微信掃描二維碼支付</p>
-                                <img src="wechat-payment-qr.png" alt="微信支付二維碼" class="mx-auto w-64 h-64 border-4 border-gray-200 rounded-lg mb-3">
-                                <p class="text-sm text-gray-500">（請將您的微信收款碼圖片命名為 wechat-payment-qr.png）</p>
-                            </div>
+                            <p class="text-gray-700 mb-4" id="payment-message">請點擊下方按鈕生成微信支付二維碼，支付成功後將自動開通。</p>
 
-                            <!-- 上传支付凭证 -->
                             <div class="bg-white rounded-lg p-6">
-                                <h4 class="font-bold mb-3">上傳支付憑證</h4>
-                                <form id="payment-proof-form" onsubmit="submitPaymentProof(event)" class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm mb-2">請上傳支付成功的截圖 *</label>
-                                        <input type="file" id="payment-proof" accept="image/*" required
-                                               class="w-full px-4 py-2 border rounded-lg">
-                                    </div>
-                                    <button type="submit" class="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-orange-600 transition">
-                                        提交支付憑證
+                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                    <p class="text-gray-600">
+                                        應付金額：
+                                        <span class="font-bold text-brand-orange text-lg" id="payment-amount">--</span>
+                                        <span class="text-sm">CNY</span>
+                                    </p>
+                                    <button type="button" id="create-wechat-order-btn" onclick="createWechatOrder()" class="bg-brand-orange text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition">
+                                        生成微信支付二維碼
                                     </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                </div>
 
-                <!-- 等待审核提示 -->
-                <div id="payment-pending" class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-8 hidden">
-                    <div class="flex items-start gap-4">
-                        <div class="text-4xl">⏳</div>
-                        <div>
-                            <h3 class="text-xl font-bold text-blue-800 mb-2">支付憑證審核中</h3>
-                            <p class="text-gray-700">您的支付憑證已提交，請耐心等待管理員審核。審核通過後即可參加活動。</p>
+                                <div id="wechat-order-box" class="hidden border border-gray-200 rounded-lg p-4">
+                                    <p class="text-sm text-gray-600 mb-3">請使用微信掃碼完成支付</p>
+                                    <canvas id="wechat-pay-qrcode" class="mx-auto mb-3"></canvas>
+                                    <p class="text-xs text-gray-500 break-all">訂單號：<span id="wechat-order-no">-</span></p>
+                                    <p class="text-sm text-blue-700 mt-2" id="wechat-order-status">等待支付...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -337,19 +327,21 @@
                 <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
                     <h3 class="text-xl font-bold text-brand-dark mb-6">📸 分享您的活動</h3>
                     <form id="winwin-form" onsubmit="submitActivity(event)" class="space-y-6">
-                        <!-- 活动标题 -->
+                        <!-- 固定任务选择 -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">活動標題 *</label>
-                            <input type="text" id="activity-title" required 
-                                   placeholder="例如：我和奶奶做了蛋糕" 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">選擇任務（1-20） *</label>
+                            <select id="activity-task-id" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none bg-white">
+                                <option value="">請先選擇任務</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-2">任務內容固定，共 20 項。</p>
                         </div>
 
                         <!-- 活动描述 -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">活動描述 *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">活動描述 / 反思 *</label>
                             <textarea id="activity-description" required rows="4"
-                                      placeholder="分享活動的詳細內容、感受和收獲..."
+                                      placeholder="請描述你如何完成此任務，以及你的感受..."
                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none resize-none"></textarea>
                         </div>
 
@@ -681,7 +673,9 @@
                     // 检查 user 对象结构，兼容数据库字段(snake_case)和前端字段(camelCase)
                     const lastName = user.lastName || user.last_name || '';
                     const firstName = user.firstName || user.first_name || '';
-                    nameDisplay.textContent = `${lastName}${firstName}`;
+                    const fullName = `${lastName}${firstName}`.trim() || '會員';
+                    nameDisplay.textContent = fullName;
+                    nameDisplay.title = fullName;
                     
                     // 检查是否是管理员，显示/隐藏侧边栏管理后台入口
                     if (user.isAdmin) {
@@ -703,6 +697,7 @@
                 userInfo.classList.add('hidden');
                 userInfo.classList.remove('flex');
                 nameDisplay.textContent = '會員';
+                nameDisplay.title = '會員';
                 
                 // 隐藏侧边栏管理后台入口
                 if (sidebarAdminLink) sidebarAdminLink.classList.add('hidden');
@@ -715,46 +710,46 @@
             }
         }
 
-        function logout() {
-            if(confirm('確定要登出嗎？')) {
-                try {
-                    // 清除所有登录相关的数据
-                    sessionStorage.removeItem('userInfo');
-                    
-                    // 清除全局变量
-                    if (typeof currentUser !== 'undefined') {
-                        currentUser = null;
-                    }
-                    
-                    // 清除UI状态
-                    const authBtns = document.getElementById('auth-buttons-desktop');
-                    const userInfo = document.getElementById('user-info-desktop');
-                    const nameDisplay = document.getElementById('username-display');
-                    
-                    if (authBtns) authBtns.classList.remove('hidden');
-                    if (userInfo) {
-                        userInfo.classList.add('hidden');
-                        userInfo.classList.remove('flex');
-                    }
-                    if (nameDisplay) nameDisplay.textContent = '會員';
-                    
-                    // 如果在IG Finisher Program页面，返回首页
-                    const winwinContent = document.getElementById('content-winwin');
-                    if (winwinContent && !winwinContent.classList.contains('hidden')) {
-                        switchTab('intro');
-                    }
-                    
-                    // 显示登出成功提示
-                    alert('登出成功！');
-                    
-                    // 刷新页面以确保完全清除状态
-                    location.reload();
-                } catch (error) {
-                    console.error('登出错误:', error);
-                    // 即使出错也强制刷新
-                    sessionStorage.clear();
-                    location.reload();
+        function clearClientAuthState() {
+            try {
+                sessionStorage.removeItem('userInfo');
+                sessionStorage.removeItem('adminUser');
+            } catch (error) {
+                console.warn('清理 sessionStorage 失敗:', error);
+            }
+
+            try {
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('adminUser');
+            } catch (error) {
+                console.warn('清理 localStorage 失敗:', error);
+            }
+        }
+
+        function logout(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            try {
+                stopPaymentPolling();
+                resetWechatOrderUI();
+                clearClientAuthState();
+
+                if (typeof currentUser !== 'undefined') {
+                    currentUser = null;
                 }
+
+                updateUIState(false, null);
+
+                const logoutUrl = new URL(window.location.href);
+                logoutUrl.searchParams.set('_logout', Date.now().toString());
+                window.location.replace(logoutUrl.pathname + logoutUrl.search);
+            } catch (error) {
+                console.error('登出错误:', error);
+                clearClientAuthState();
+                window.location.replace('index.html?_logout=' + Date.now());
             }
         }
 
@@ -827,9 +822,45 @@
         
         // 全局变量：当前登录用户
         let currentUser = null;
+
+        const INTERGENERATIONAL_TASKS = [
+            'Get to know an interesting, real story of an adult who is at least 40 years older than you.',
+            'Learn to cook one dish from an older adult who is at least 30 years older than you.',
+            'Take a walk in a park with a person who is at least 50 years older than you.',
+            'Play a card or chess game with two to three older adults who are at least 35 years older than you.',
+            'Ask a grandparent-like figure to talk about ONE old-time item (e.g., an old photo, an old watch, a retro walkman/music player, etc.) with you.',
+            "Get to know a grandparent's childhood story.",
+            'Sing a song with grandparents.',
+            'Design a (festival) card and give it to your grandparent(s).',
+            "Spend time with your or your friend's grandparents in a shopping mall or a coffee shop.",
+            'Grow a pot of plants with your grandparent(s).',
+            'Enjoy ice-cream with a grandparent or grandparent-like person.',
+            'Serve a grandparent or grandparent-like person a cup of tea.',
+            'Learn from a grandparent or grandparent-like person a kind of traditional craftsmanship.',
+            "Consult a grandparent-like figure for their best advice for one's health.",
+            "Consult a grandparent-like figure for their best advice for one's career.",
+            'Share one of your secrets with a grandparent.',
+            'When you feel sad, simply talk to your grandparent(s).',
+            'Share a happy moment with your grandparent(s).',
+            'Wear a funny dress with a person who is at least 40 years older than you, and take a photo together.',
+            'Share a joke with a grandparent or a person who is at least 60 years older than you.'
+        ];
         
         // 全局变量：已选择的文件数组
         let selectedFiles = [];
+        let paymentPollingTimer = null;
+
+        function initializeTaskOptions() {
+            const select = document.getElementById('activity-task-id');
+            if (!select) return;
+
+            INTERGENERATIONAL_TASKS.forEach((task, index) => {
+                const option = document.createElement('option');
+                option.value = String(index + 1);
+                option.textContent = `${index + 1}. ${task}`;
+                select.appendChild(option);
+            });
+        }
 
         // 检查登录并导航
         async function checkLoginAndNavigate(tabName) {
@@ -851,90 +882,100 @@
             await checkPaymentStatus();
         }
 
-        // 检查用户支付状态
-        async function checkPaymentStatus() {
-            if (!currentUser) return;
-
-            try {
-                const response = await fetch(`http://127.0.0.1:3000/api/payment-status/${currentUser.email}`);
-                const data = await response.json();
-
-                const paymentVerification = document.getElementById('payment-verification');
-                const paymentPending = document.getElementById('payment-pending');
-                const activityUploadSection = document.getElementById('activity-upload-section');
-
-                // 隐藏所有区域
-                paymentVerification.classList.add('hidden');
-                paymentPending.classList.add('hidden');
-                activityUploadSection.classList.add('hidden');
-
-                if (data.success) {
-                    if (data.hasPermission) {
-                        // 有权限：显示活动上传表单
-                        activityUploadSection.classList.remove('hidden');
-                        
-                        if (data.isFreeUser) {
-                            // 免费用户提示
-                            alert('歡迎！您是學校用戶，無需支付即可參加活動 🎉');
-                        }
-                        
-                        // 加载活动记录
-                        loadUserActivities();
-                    } else if (data.paymentStatus === 'pending') {
-                        // 等待审核
-                        paymentPending.classList.remove('hidden');
-                    } else {
-                        // 需要支付
-                        paymentVerification.classList.remove('hidden');
-                    }
-                }
-            } catch (error) {
-                console.error('检查支付状态失败:', error);
-                alert('無法檢查支付狀態');
+        function stopPaymentPolling() {
+            if (paymentPollingTimer) {
+                clearInterval(paymentPollingTimer);
+                paymentPollingTimer = null;
             }
         }
 
-        // 提交支付凭证
-        async function submitPaymentProof(event) {
-            event.preventDefault();
+        function startPaymentPolling() {
+            stopPaymentPolling();
+            paymentPollingTimer = setInterval(async () => {
+                await checkPaymentStatus({ silentFreeUserNotice: true });
+            }, 5000);
+        }
 
+        function resetWechatOrderUI() {
+            const orderBox = document.getElementById('wechat-order-box');
+            const orderNo = document.getElementById('wechat-order-no');
+            const orderStatus = document.getElementById('wechat-order-status');
+            const qrCanvas = document.getElementById('wechat-pay-qrcode');
+
+            if (orderBox) orderBox.classList.add('hidden');
+            if (orderNo) orderNo.textContent = '-';
+            if (orderStatus) orderStatus.textContent = '等待支付...';
+            if (qrCanvas) {
+                const ctx = qrCanvas.getContext('2d');
+                if (ctx) ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+            }
+        }
+
+        // 检查用户支付状态
+        async function checkPaymentStatus(options = {}) {
+            if (!currentUser) return;
+            const paymentVerification = document.getElementById('payment-verification');
+            const activityUploadSection = document.getElementById('activity-upload-section');
+
+            // 当前版本：活动免支付，直接开放上传区
+            paymentVerification.classList.add('hidden');
+            activityUploadSection.classList.remove('hidden');
+            stopPaymentPolling();
+            resetWechatOrderUI();
+
+            loadUserActivities();
+        }
+
+        // 创建微信支付订单并显示二维码
+        async function createWechatOrder() {
             if (!currentUser) return;
 
-            const proofFile = document.getElementById('payment-proof').files[0];
-            if (!proofFile) {
-                alert('請選擇支付憑證圖片');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('proof', proofFile);
-            formData.append('userEmail', currentUser.email);
+            const createBtn = document.getElementById('create-wechat-order-btn');
+            const paymentAmount = document.getElementById('payment-amount');
+            const orderBox = document.getElementById('wechat-order-box');
+            const orderNo = document.getElementById('wechat-order-no');
+            const orderStatus = document.getElementById('wechat-order-status');
+            const qrCanvas = document.getElementById('wechat-pay-qrcode');
+            const originalText = createBtn.innerText;
 
             try {
-                const submitBtn = event.target.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
-                submitBtn.innerText = '提交中...';
+                createBtn.disabled = true;
+                createBtn.innerText = '生成中...';
 
-                const response = await fetch('http://127.0.0.1:3000/api/submit-payment', {
+                const response = await fetch('http://127.0.0.1:3000/api/wechat/create-order', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userEmail: currentUser.email })
                 });
-
                 const data = await response.json();
 
-                if (data.success) {
-                    alert(data.message);
-                    // 重新检查支付状态
-                    await checkPaymentStatus();
-                } else {
-                    alert(data.message || '提交失敗');
+                if (!response.ok || !data.success) {
+                    alert(data.message || '建立微信支付訂單失敗');
+                    return;
                 }
 
-                submitBtn.disabled = false;
-                submitBtn.innerText = '提交支付憑證';
+                if (data.hasPermission) {
+                    await checkPaymentStatus();
+                    return;
+                }
+
+                paymentAmount.textContent = (data.amount / 100).toFixed(2);
+                orderNo.textContent = data.outTradeNo || '-';
+                orderStatus.textContent = data.message || '請在微信內完成支付';
+
+                await QRCode.toCanvas(qrCanvas, data.codeUrl, {
+                    width: 240,
+                    margin: 1
+                });
+
+                orderBox.classList.remove('hidden');
+                startPaymentPolling();
             } catch (error) {
-                console.error('提交支付凭证失败:', error);
-                alert('提交失敗');
+                console.error('创建微信订单失败:', error);
+                alert('建立微信支付訂單失敗');
+            } finally {
+                createBtn.disabled = false;
+                createBtn.innerText = originalText;
             }
         }
 
@@ -1024,11 +1065,11 @@
                 return;
             }
 
-            const title = document.getElementById('activity-title').value;
+            const taskId = document.getElementById('activity-task-id').value;
             const description = document.getElementById('activity-description').value;
 
-            if (!title || !description) {
-                alert('請填寫活動標題和描述');
+            if (!taskId || !description) {
+                alert('請先選擇任務並填寫活動描述');
                 return;
             }
             
@@ -1046,7 +1087,7 @@
 
             // 创建 FormData
             const formData = new FormData();
-            formData.append('title', title);
+            formData.append('taskId', taskId);
             formData.append('description', description);
             formData.append('userEmail', currentUser.email);
             
@@ -1076,11 +1117,11 @@
                 } else {
                     // 处理权限错误
                     if (data.needsPayment) {
-                        alert(data.message + '\n\n請先上傳支付憑證。');
-                        await checkPaymentStatus(); // 重新检查状态，显示支付界面
-                    } else if (data.pending) {
-                        alert(data.message);
-                        await checkPaymentStatus(); // 显示等待审核界面
+                        alert(data.message || '暫時無法提交活動');
+                        await checkPaymentStatus();
+                    } else if (data.needsLogin) {
+                        alert(data.message || '登入狀態已失效，請重新登入');
+                        openModal('login');
                     } else {
                         alert(data.message || '提交失敗');
                     }
@@ -1132,6 +1173,18 @@
 
         // 页面加载时检查登录状态
         window.addEventListener('DOMContentLoaded', () => {
+            const currentUrl = new URL(window.location.href);
+            if (currentUrl.searchParams.has('_logout')) {
+                currentUrl.searchParams.delete('_logout');
+                history.replaceState(null, '', currentUrl.pathname + (currentUrl.search ? currentUrl.search : ''));
+            }
+
+            const logoutBtn = document.getElementById('logout-btn-desktop');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+
+            initializeTaskOptions();
             const userInfo = sessionStorage.getItem('userInfo');
             if (userInfo) {
                 currentUser = JSON.parse(userInfo);

@@ -36,6 +36,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS activities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_email TEXT NOT NULL,
+    task_id INTEGER,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     file_paths TEXT NOT NULL,
@@ -44,6 +45,13 @@ db.exec(`
     FOREIGN KEY (user_email) REFERENCES users(email)
   )
 `);
+
+// 兼容升级：为 activities 增加 task_id 字段
+const activityColumns = db.prepare("PRAGMA table_info(activities)").all();
+const hasTaskIdColumn = activityColumns.some(col => col.name === 'task_id');
+if (!hasTaskIdColumn) {
+  db.exec('ALTER TABLE activities ADD COLUMN task_id INTEGER');
+}
 
 // 创建用户支付状态表
 db.exec(`
@@ -62,14 +70,59 @@ db.exec(`
   )
 `);
 
+// 创建微信支付订单表
+db.exec(`
+  CREATE TABLE IF NOT EXISTS payment_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    out_trade_no TEXT UNIQUE NOT NULL,
+    user_email TEXT NOT NULL,
+    description TEXT NOT NULL,
+    amount_total INTEGER NOT NULL,
+    currency TEXT DEFAULT 'CNY',
+    status TEXT DEFAULT 'CREATED',
+    code_url TEXT,
+    transaction_id TEXT,
+    raw_notify TEXT,
+    paid_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_email) REFERENCES users(email)
+  )
+`);
+
 // 创建索引以提高查询性能
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
   CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email);
   CREATE INDEX IF NOT EXISTS idx_activities_user_email ON activities(user_email);
+  CREATE INDEX IF NOT EXISTS idx_activities_task_id ON activities(task_id);
   CREATE INDEX IF NOT EXISTS idx_user_payments_email ON user_payments(user_email);
   CREATE INDEX IF NOT EXISTS idx_user_payments_status ON user_payments(payment_status);
+  CREATE INDEX IF NOT EXISTS idx_payment_orders_user_email ON payment_orders(user_email);
+  CREATE INDEX IF NOT EXISTS idx_payment_orders_status ON payment_orders(status);
 `);
+
+// 回填历史数据里的 task_id（标题格式：Task N: ...）
+const legacyActivities = db.prepare(`
+  SELECT id, title
+  FROM activities
+  WHERE task_id IS NULL AND title LIKE 'Task %:%'
+`).all();
+
+if (legacyActivities.length > 0) {
+  const updateTaskStmt = db.prepare('UPDATE activities SET task_id = ? WHERE id = ?');
+  const updateInTx = db.transaction((rows) => {
+    for (const row of rows) {
+      const match = /^Task\s+(\d+)\s*:/i.exec(row.title || '');
+      if (!match) continue;
+      const taskId = Number.parseInt(match[1], 10);
+      if (Number.isInteger(taskId) && taskId >= 1 && taskId <= 20) {
+        updateTaskStmt.run(taskId, row.id);
+      }
+    }
+  });
+  updateInTx(legacyActivities);
+}
 
 console.log('数据库初始化完成！');
 
