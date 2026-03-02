@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -246,6 +247,53 @@ function decryptWechatNotifyResource(resource) {
     ]).toString('utf8');
 
     return JSON.parse(plainText);
+}
+
+// --- 千问 API（AI 阅卷）---
+const QWEN_BASE_URL = (process.env.QWEN_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1').replace(/\/$/, '');
+const QWEN_API_KEY = process.env.QWEN_API_KEY || '';
+const QWEN_MODEL = process.env.QWEN_MODEL || 'qwen3.5-plus';
+
+async function callQwenChat(systemPrompt, userMessage) {
+    if (!QWEN_API_KEY) {
+        throw new Error('QWEN_API_KEY 未配置');
+    }
+    const res = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${QWEN_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: QWEN_MODEL,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage }
+            ]
+        })
+    });
+    const data = await res.json();
+    if (data.error) {
+        throw new Error(data.error.message || data.error.code || 'Qwen API 錯誤');
+    }
+    const content = data.choices?.[0]?.message?.content?.trim() || '';
+    return content;
+}
+
+function parseGradeResponse(content) {
+    let text = content.trim();
+    const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlock) {
+        text = codeBlock[1].trim();
+    }
+    try {
+        const obj = JSON.parse(text);
+        const score = typeof obj.score === 'number' ? obj.score : (Number(obj.score) || null);
+        const feedback = typeof obj.feedback === 'string' ? obj.feedback : String(obj.feedback || '');
+        return { score, feedback };
+    } catch (e) {
+        return { score: null, feedback: content, raw: content };
+    }
 }
 
 // 数据库操作函数
@@ -1088,6 +1136,141 @@ app.get('/api/admin/task-overview', (req, res) => {
     } catch (error) {
         console.error('查询任务统计失败:', error);
         res.status(500).json({ success: false, message: '查詢失敗' });
+    }
+});
+
+// --- 评分标准与 AI 阅卷 API（管理员）---
+
+// GET 评分标准列表（20 条）
+app.get('/api/admin/scoring-prompts', (req, res) => {
+    try {
+        const rows = db.prepare('SELECT task_id, prompt, updated_at FROM task_scoring_prompts ORDER BY task_id').all();
+        res.json({ success: true, prompts: rows });
+    } catch (error) {
+        console.error('获取评分标准失败:', error);
+        res.status(500).json({ success: false, message: '獲取失敗' });
+    }
+});
+
+// PUT 更新某任务的评分 prompt
+app.put('/api/admin/scoring-prompts', (req, res) => {
+    const { task_id: taskId, prompt } = req.body;
+    const id = Number.parseInt(taskId, 10);
+    if (!Number.isInteger(id) || id < 1 || id > 20) {
+        return res.status(400).json({ success: false, message: 'task_id 須為 1–20' });
+    }
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+        return res.status(400).json({ success: false, message: 'prompt 不能為空' });
+    }
+    try {
+        db.prepare('INSERT INTO task_scoring_prompts (task_id, prompt, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(task_id) DO UPDATE SET prompt = excluded.prompt, updated_at = CURRENT_TIMESTAMP').run(id, prompt.trim());
+        const row = db.prepare('SELECT task_id, prompt, updated_at FROM task_scoring_prompts WHERE task_id = ?').get(id);
+        res.json({ success: true, prompt: row });
+    } catch (error) {
+        console.error('更新评分标准失败:', error);
+        res.status(500).json({ success: false, message: '更新失敗' });
+    }
+});
+
+// POST AI 优化 Prompt
+app.post('/api/admin/optimize-prompt', async (req, res) => {
+    const { task_id: taskId } = req.body;
+    const id = Number.parseInt(taskId, 10);
+    if (!Number.isInteger(id) || id < 1 || id > 20) {
+        return res.status(400).json({ success: false, message: 'task_id 須為 1–20' });
+    }
+    const promptRow = db.prepare('SELECT prompt FROM task_scoring_prompts WHERE task_id = ?').get(id);
+    const currentPrompt = promptRow ? promptRow.prompt : '';
+    const taskTitle = INTERGENERATIONAL_TASKS[id - 1] || `Task ${id}`;
+    
+    const optimizeSystemPrompt = `你是一位專業的評分標準設計專家。你的任務是優化教師提供的評分 prompt，使其更清晰、更具體、更易於 AI 評分系統使用。
+    
+優化原則：
+1. 明確評分維度（如：內容完整性、情感真摯度、反思深度等）
+2. 提供具體的評分標準（如：什麼樣的答案得高分，什麼樣的答案得低分）
+3. 保持評分的一致性（1-10 分，10 分為最高）
+4. 要求 AI 提供具體、有建設性的反饋
+5. 使用清晰、簡潔的語言
+
+請輸出優化後的 prompt，不需要解釋。`;
+
+    const optimizeUserMessage = `【任務標題】${taskTitle}
+
+【當前評分 Prompt】
+${currentPrompt || '（空，請從頭設計）'}
+
+【任務描述】
+這是一個跨代交流活動，學生需要與比自己年長至少 30-40 歲的人進行互動，並提交活動描述。
+
+請根據以上信息，設計或優化評分 prompt，使其能更準確地評估學生的活動參與情況。`;
+
+    try {
+        const optimizedContent = await callQwenChat(optimizeSystemPrompt, optimizeUserMessage);
+        res.json({
+            success: true,
+            optimized_prompt: optimizedContent
+        });
+    } catch (error) {
+        console.error('AI 优化 Prompt 失败:', error);
+        res.status(500).json({ success: false, message: error.message || '優化失敗' });
+    }
+});
+
+// POST AI 阅卷（单条活动）
+app.post('/api/admin/grade-activity', async (req, res) => {
+    const { activity_id: activityId } = req.body;
+    const id = Number.parseInt(activityId, 10);
+    if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ success: false, message: '請提供有效的 activity_id' });
+    }
+    const activity = db.prepare('SELECT id, task_id, title, description FROM activities WHERE id = ?').get(id);
+    if (!activity) {
+        return res.status(404).json({ success: false, message: '活動記錄不存在' });
+    }
+    const taskId = activity.task_id || 1;
+    const promptRow = db.prepare('SELECT prompt FROM task_scoring_prompts WHERE task_id = ?').get(taskId);
+    const systemPrompt = promptRow ? promptRow.prompt : '你是 IG Finisher 阅卷员。根据学员描述评分 1–10，并给出简短中文评语。仅输出 JSON：{"score": 数字, "feedback": "评语"}';
+    const userMessage = `【任务】${activity.title}\n\n【学员活动描述】\n${activity.description || ''}\n\n请仅输出一个 JSON 对象：{"score": 数字, "feedback": "简短中文评语"}`;
+    try {
+        const rawContent = await callQwenChat(systemPrompt, userMessage);
+        const { score, feedback, raw } = parseGradeResponse(rawContent);
+        const finalScore = score != null ? score : 0;
+        const finalFeedback = feedback || raw || '';
+        db.prepare('INSERT INTO activity_grades (activity_id, score, feedback, raw_response, graded_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(activity_id) DO UPDATE SET score = excluded.score, feedback = excluded.feedback, raw_response = excluded.raw_response, graded_at = CURRENT_TIMESTAMP').run(id, finalScore, finalFeedback, rawContent);
+        const graded = db.prepare('SELECT score, feedback, graded_at FROM activity_grades WHERE activity_id = ?').get(id);
+        res.json({
+            success: true,
+            score: graded.score,
+            feedback: graded.feedback,
+            graded_at: graded.graded_at
+        });
+    } catch (error) {
+        console.error('AI 阅卷失败:', error);
+        res.status(500).json({ success: false, message: error.message || '閱卷失敗' });
+    }
+});
+
+// GET 阅卷结果（按 activity_id 或批量 activity_ids）
+app.get('/api/admin/activity-grades', (req, res) => {
+    const activityId = req.query.activity_id;
+    const activityIds = req.query.activity_ids;
+    let ids = [];
+    if (activityId) {
+        const n = Number.parseInt(activityId, 10);
+        if (Number.isInteger(n)) ids = [n];
+    } else if (activityIds && typeof activityIds === 'string') {
+        ids = activityIds.split(',').map(s => Number.parseInt(s.trim(), 10)).filter(n => Number.isInteger(n) && n > 0);
+    }
+    if (ids.length === 0) {
+        return res.json({ success: true, grades: [] });
+    }
+    try {
+        const placeholders = ids.map(() => '?').join(',');
+        const rows = db.prepare(`SELECT activity_id, score, feedback, graded_at FROM activity_grades WHERE activity_id IN (${placeholders})`).all(...ids);
+        res.json({ success: true, grades: rows });
+    } catch (error) {
+        console.error('获取阅卷结果失败:', error);
+        res.status(500).json({ success: false, message: '獲取失敗' });
     }
 });
 

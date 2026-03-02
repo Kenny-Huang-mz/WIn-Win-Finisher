@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代代共荣 Generation Co-prosperity</title>
+    <title>Generation Co-prosperity</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script>
@@ -12,7 +12,7 @@
                 extend: {
                     colors: {
                         brand: {
-                            orange: '#F58A42', // 参考图中的暖橙色
+                            orange: '#F58A42',
                             dark: '#333333',
                             gray: '#666666',
                             light: '#f9f9f9'
@@ -20,14 +20,13 @@
                     },
                     fontFamily: {
                         sans: ['Noto Sans TC', 'Microsoft JhengHei', 'sans-serif'],
-                        serif: ['Times New Roman', 'serif'], // 用于英文标题
+                        serif: ['Times New Roman', 'serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        /* 简单的过渡动画 */
         .fade-in {
             animation: fadeIn 0.5s ease-in-out;
         }
@@ -56,7 +55,6 @@
             border-left: 4px solid #F58A42;
         }
 
-        /* 弹窗背景动画 */
         .modal-enter {
             opacity: 0;
             transform: scale(0.95);
@@ -79,20 +77,16 @@
 </head>
 <body class="bg-white text-brand-dark flex flex-col min-h-screen">
 
-    <!-- 顶部导航栏 -->
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
-                <!-- Logo 与 标题区域 -->
+                <!-- Logo & Title -->
                 <div class="flex items-center gap-4">
-                    <!-- SVG Logo 模拟原图风格 -->
                     <div class="w-16 h-16 relative">
                         <svg viewBox="0 0 100 100" class="w-full h-full">
-                            <!-- 树干/人 -->
                             <path d="M50 90 C 50 70, 40 60, 40 40 C 40 20, 60 20, 60 40 C 60 60, 50 70, 50 90 Z" fill="black" />
-                            <!-- 绿叶圈 -->
                             <circle cx="50" cy="35" r="25" fill="none" stroke="#4CAF50" stroke-width="3" />
-                            <!-- 爱心/果实 -->
                             <path d="M35 45 C 35 45, 30 35, 40 30 C 50 25, 55 45, 35 45" fill="#E53935" />
                         </svg>
                     </div>
@@ -103,20 +97,20 @@
                     </div>
                 </div>
 
-                <!-- 右上角功能区 (桌面端) -->
+                <!-- Right Side Actions (Desktop) -->
                 <div class="hidden md:flex flex-col items-end gap-2">
-                    <!-- 登录/注册区 -->
+                    <!-- Login/Register Buttons -->
                     <div id="auth-buttons-desktop" class="text-sm font-medium">
-                        <button onclick="openModal('login')" class="text-gray-600 hover:text-brand-orange px-2">會員登入</button>
+                        <button onclick="openModal('login')" class="text-gray-600 hover:text-brand-orange px-2">Login</button>
                         <span class="text-gray-300">|</span>
-                        <button onclick="openModal('register')" class="text-brand-orange hover:text-orange-600 px-2">會員註冊</button>
+                        <button onclick="openModal('register')" class="text-brand-orange hover:text-orange-600 px-2">Register</button>
                     </div>
-                    <!-- 登录成功后显示的用户信息 (默认隐藏) -->
+                    <!-- User Info (hidden by default) -->
                     <div id="user-info-desktop" class="hidden text-sm font-medium flex items-center gap-2 max-w-full">
                         <span class="text-gray-600 min-w-0">
-                            歡迎您, <span id="username-display" class="font-bold text-brand-orange inline-block max-w-[220px] align-bottom truncate" title="會員">會員</span>
+                            Welcome, <span id="username-display" class="font-bold text-brand-orange inline-block max-w-[220px] align-bottom truncate" title="Member">Member</span>
                         </span>
-                        <button id="logout-btn-desktop" type="button" class="shrink-0 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 underline">登出</button>
+                        <button id="logout-btn-desktop" type="button" class="shrink-0 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 underline">Logout</button>
                     </div>
 
                     <div class="flex items-center gap-4 mt-1">
@@ -126,11 +120,9 @@
                             <span class="cursor-pointer hover:text-brand-orange">English</span>
                         </div>
                         <div class="flex gap-2">
-                            <!-- Facebook Icon -->
                             <a href="#" class="bg-blue-800 text-white w-8 h-8 flex items-center justify-center rounded hover:opacity-80">
                                 <span class="font-bold text-lg">f</span>
                             </a>
-                            <!-- WeChat/Line Icon Placeholder -->
                             <a href="#" class="bg-green-500 text-white w-8 h-8 flex items-center justify-center rounded hover:opacity-80">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
                             </a>
@@ -138,123 +130,122 @@
                     </div>
                 </div>
 
-                <!-- 移动端菜单按钮 -->
+                <!-- Mobile Menu Button -->
                 <button class="md:hidden text-brand-dark" onclick="toggleMobileMenu()">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </div>
         </div>
         
-        <!-- 移动端下拉菜单 -->
+        <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden bg-gray-50 border-t">
             <div id="auth-buttons-mobile" class="p-4 border-b flex gap-2">
-                <button onclick="openModal('login'); toggleMobileMenu()" class="flex-1 bg-white border border-gray-300 text-gray-700 py-1 rounded text-center">登入</button>
-                <button onclick="openModal('register'); toggleMobileMenu()" class="flex-1 bg-brand-orange text-white py-1 rounded text-center">註冊</button>
+                <button onclick="openModal('login'); toggleMobileMenu()" class="flex-1 bg-white border border-gray-300 text-gray-700 py-1 rounded text-center">Login</button>
+                <button onclick="openModal('register'); toggleMobileMenu()" class="flex-1 bg-brand-orange text-white py-1 rounded text-center">Register</button>
             </div>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100">首頁</a>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100 text-brand-orange font-bold">關於我們</a>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100">項目概覽</a>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-100">聯絡我們</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Home</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100 text-brand-orange font-bold">About Us</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Program Overview</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Contact Us</a>
         </div>
     </header>
 
-    <!-- 主体内容区域 -->
+    <!-- Main Content -->
     <main class="flex-grow container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
         
-        <!-- 左侧边栏导航 (Sidebar) -->
+        <!-- Sidebar Navigation -->
         <aside class="w-full md:w-1/4">
             <div class="sticky top-24">
                 <ul class="space-y-1 text-gray-600 border-l-2 border-gray-100">
                     <li onclick="switchTab('intro')" id="tab-intro" class="sidebar-item active px-4 py-3 text-lg font-medium">
-                        機構簡介
+                        About Us
                     </li>
                     <li onclick="switchTab('mission')" id="tab-mission" class="sidebar-item px-4 py-3 text-lg font-medium">
-                        使命、願景及價值觀
+                        Mission, Vision & Values
                     </li>
                     <li onclick="switchTab('structure')" id="tab-structure" class="sidebar-item px-4 py-3 text-lg font-medium">
-                        組織架構
+                        Organization Structure
                     </li>
                     <li onclick="switchTab('history')" id="tab-history" class="sidebar-item px-4 py-3 text-lg font-medium">
-                        發展歷程
+                        Our History
                     </li>
                     <li onclick="checkLoginAndNavigate('winwin')" id="tab-winwin" class="sidebar-item px-4 py-3 text-lg font-medium bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100">
                         <span class="text-brand-orange font-bold">IG Finisher Program</span>
-                        <span class="text-xs text-gray-500 block">跨代共融活動</span>
+                        <span class="text-xs text-gray-500 block">Intergenerational Activities</span>
                     </li>
                     
-                    <!-- 管理员后台入口（仅管理员可见） -->
-                    <li id="sidebar-admin-link" class="hidden p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 cursor-pointer transition rounded-lg mt-4">
+                    <!-- Admin Dashboard Link (Admin Only) -->
+                    <li id="sidebar-admin-link" class="hidden p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition rounded-lg mt-4">
                         <a href="admin.html" class="block text-white">
-                            <span class="font-bold">🎯 管理員後台</span>
-                            <span class="text-xs opacity-90 block">系統管理功能</span>
+                            <span class="font-bold">🎯 Admin Dashboard</span>
+                            <span class="text-xs opacity-90 block">System Management</span>
                         </a>
                     </li>
                 </ul>
             </div>
         </aside>
 
-        <!-- 右侧内容显示区 (Content) -->
+        <!-- Content Area -->
         <div class="w-full md:w-3/4">
             
-            <!-- Banner 图片 -->
+            <!-- Banner Image -->
             <div class="w-full h-64 md:h-80 bg-gray-200 rounded-lg overflow-hidden mb-8 relative">
                 <img src="https://images.unsplash.com/photo-1579187707643-35646d22b596?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80" 
-                     alt="跨代共融 - 手牵手" 
+                     alt="Intergenerational Connection - Hand in Hand" 
                      class="w-full h-full object-cover opacity-90 hover:opacity-100 transition duration-500">
                 <div class="absolute bottom-0 left-0 bg-gradient-to-t from-black/60 to-transparent w-full p-6">
-                    <h3 class="text-white text-2xl font-bold">傳承與關愛，共建和諧社會</h3>
+                    <h3 class="text-white text-2xl font-bold">Passing on Wisdom & Care, Building a Harmonious Society</h3>
                 </div>
             </div>
 
-            <!-- 内容板块：机构简介 -->
+            <!-- Content: About Us -->
             <div id="content-intro" class="content-section fade-in">
                 <h2 class="text-2xl font-bold text-brand-dark mb-6 border-l-4 border-brand-orange pl-4">
-                    機構簡介
+                    About Us
                 </h2>
                 <div class="space-y-6 text-gray-700 leading-relaxed text-justify">
                     <p>
-                        「<strong>代代共荣有限公司</strong>」（簡稱：Generation Co-prosperity）於2024年成立，是一間按香港《公司條例》註冊成立的擔保有限公司。本會屬非牟利團體，致力於申請成為獲稅務豁免的慈善團體。
+                        <strong>Generation Co-prosperity Limited</strong> (abbreviated as "Generation Co-prosperity") was established in 2024 as a company limited by guarantee under the Hong Kong Companies Ordinance. We are a non-profit organization committed to applying for tax-exempt charitable status.
                     </p>
                     <p>
-                        本會成立目的，是推廣和提倡<strong>跨代共融</strong>的概念，通過讓青年一輩及年長一辈相互互動，以實現互惠互利，並解決與他們相關的社會問題（如长者孤独、青年缺乏引导等）。
+                        Our purpose is to promote and advocate the concept of <strong>intergenerational co-prosperity</strong>, fostering mutual benefit between youth and seniors, and addressing social issues related to both groups (such as elderly loneliness and lack of youth mentorship).
                     </p>
                     <p>
-                        代代共荣有限公司是建基於一系列成功的社区互助計劃而成立。自筹备以来，我们积极與本地和海外的學校進行合作，廣泛地提供各種非牟利服務。合作機構例如各大专院校、本地中小學、社區中心及其他社會福利機構等。
+                        Generation Co-prosperity Limited is built upon a series of successful community mutual aid programs. Since our inception, we have actively collaborated with local and overseas schools, providing various non-profit services. Our partners include universities, local primary and secondary schools, community centers, and other social welfare organizations.
                     </p>
                     <div class="bg-orange-50 p-6 rounded-lg border border-orange-100 mt-8">
-                        <h4 class="text-brand-orange font-bold mb-2">我們的核心理念</h4>
-                        <p class="text-sm">長幼有序，互助互愛。讓長者的智慧引導青年，讓青年的活力溫暖長者。</p>
+                        <h4 class="text-brand-orange font-bold mb-2">Our Core Philosophy</h4>
+                        <p class="text-sm">Respect for elders, mutual care and support. Let the wisdom of elders guide the youth, and let the vitality of youth warm the elders.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 内容板块：使命与愿景 (默认隐藏) -->
+            <!-- Content: Mission & Vision -->
             <div id="content-mission" class="content-section hidden fade-in">
                 <h2 class="text-2xl font-bold text-brand-dark mb-6 border-l-4 border-brand-orange pl-4">
-                    使命、願景及價值觀
+                    Mission, Vision & Values
                 </h2>
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="bg-gray-50 p-6 rounded shadow-sm">
-                        <h3 class="text-xl font-bold text-brand-orange mb-3">我們的使命</h3>
-                        <p class="text-gray-600">搭建跨代沟通的桥梁，打破代际隔阂，创造一个不论年龄都能发挥所长、互相尊重的共融社会。</p>
+                        <h3 class="text-xl font-bold text-brand-orange mb-3">Our Mission</h3>
+                        <p class="text-gray-600">Build bridges for intergenerational communication, break down generational barriers, and create an inclusive society where people of all ages can contribute and be respected.</p>
                     </div>
                     <div class="bg-gray-50 p-6 rounded shadow-sm">
-                        <h3 class="text-xl font-bold text-brand-orange mb-3">我們的願景</h3>
-                        <p class="text-gray-600">成为大中华地区最具影响力的跨代共融推动平台，让每一个家庭都能享受代际和谐带来的幸福。</p>
+                        <h3 class="text-xl font-bold text-brand-orange mb-3">Our Vision</h3>
+                        <p class="text-gray-600">To become the most influential intergenerational co-prosperity platform in Greater China, enabling every family to enjoy the happiness of intergenerational harmony.</p>
                     </div>
                 </div>
             </div>
 
-             <!-- 内容板块：组织架构 (默认隐藏) -->
-             <div id="content-structure" class="content-section hidden fade-in">
+            <!-- Content: Organization Structure -->
+            <div id="content-structure" class="content-section hidden fade-in">
                 <h2 class="text-2xl font-bold text-brand-dark mb-6 border-l-4 border-brand-orange pl-4">
-                    組織架構
+                    Organization Structure
                 </h2>
                 <div class="flex justify-center py-10">
-                    <!-- 简单的组织架构示意图 -->
                     <div class="text-center w-full max-w-2xl">
                         <div class="border-2 border-brand-orange p-4 rounded bg-white font-bold text-lg mb-8 inline-block shadow-md">
-                            董事局 / 理事會
+                            Board of Directors / Council
                         </div>
                         <div class="h-8 w-0.5 bg-gray-300 mx-auto -mt-8 mb-0"></div>
                         <div class="h-0.5 w-3/4 bg-gray-300 mx-auto mb-8"></div>
@@ -262,15 +253,15 @@
                         <div class="grid grid-cols-3 gap-4">
                             <div class="flex flex-col items-center">
                                 <div class="h-8 w-0.5 bg-gray-300 -mt-8 mb-0"></div>
-                                <div class="border border-gray-400 p-3 rounded bg-white mt-8 w-full">項目策劃部</div>
+                                <div class="border border-gray-400 p-3 rounded bg-white mt-8 w-full">Project Planning</div>
                             </div>
                             <div class="flex flex-col items-center">
                                 <div class="h-8 w-0.5 bg-gray-300 -mt-8 mb-0"></div>
-                                <div class="border border-gray-400 p-3 rounded bg-white mt-8 w-full">外務拓展部</div>
+                                <div class="border border-gray-400 p-3 rounded bg-white mt-8 w-full">External Relations</div>
                             </div>
                             <div class="flex flex-col items-center">
                                 <div class="h-8 w-0.5 bg-gray-300 -mt-8 mb-0"></div>
-                                <div class="border border-gray-400 p-3 rounded bg-white mt-8 w-full">行政及財務部</div>
+                                <div class="border border-gray-400 p-3 rounded bg-white mt-8 w-full">Administration & Finance</div>
                             </div>
                         </div>
                     </div>
@@ -279,254 +270,253 @@
 
             <div id="content-history" class="content-section hidden fade-in">
                  <h2 class="text-2xl font-bold text-brand-dark mb-6 border-l-4 border-brand-orange pl-4">
-                    發展歷程
+                    Our History
                 </h2>
-                <p class="text-gray-600">網站建設中...</p>
+                <p class="text-gray-600">Website under construction...</p>
             </div>
 
-            <!-- IG Finisher Program 活动内容区 -->
+            <!-- IG Finisher Program Content -->
             <div id="content-winwin" class="content-section hidden fade-in">
                 <h2 class="text-3xl font-bold text-brand-orange mb-2">IG Finisher Program</h2>
-                <p class="text-gray-600 mb-6">分享您與長者的跨代共融活動，記錄溫馨時刻 💛</p>
+                <p class="text-gray-600 mb-6">Share your intergenerational activities and record heartwarming moments 💛</p>
 
-                <!-- 支付验证区域 -->
+                <!-- Payment Verification Area -->
                 <div id="payment-verification" class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-8 hidden">
                     <div class="flex items-start gap-4">
                         <div class="text-4xl">⚠️</div>
                         <div class="flex-1">
-                            <h3 class="text-xl font-bold text-yellow-800 mb-2">需要支付參加費</h3>
-                            <p class="text-gray-700 mb-4" id="payment-message">請點擊下方按鈕生成微信支付二維碼，支付成功後將自動開通。</p>
+                            <h3 class="text-xl font-bold text-yellow-800 mb-2">Participation Fee Required</h3>
+                            <p class="text-gray-700 mb-4" id="payment-message">Click the button below to generate a WeChat Pay QR code. Access will be granted automatically after successful payment.</p>
 
                             <div class="bg-white rounded-lg p-6">
                                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                                     <p class="text-gray-600">
-                                        應付金額：
+                                        Amount Due:
                                         <span class="font-bold text-brand-orange text-lg" id="payment-amount">--</span>
                                         <span class="text-sm">CNY</span>
                                     </p>
                                     <button type="button" id="create-wechat-order-btn" onclick="createWechatOrder()" class="bg-brand-orange text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition">
-                                        生成微信支付二維碼
+                                        Generate WeChat Pay QR Code
                                     </button>
                                 </div>
 
                                 <div id="wechat-order-box" class="hidden border border-gray-200 rounded-lg p-4">
-                                    <p class="text-sm text-gray-600 mb-3">請使用微信掃碼完成支付</p>
+                                    <p class="text-sm text-gray-600 mb-3">Please scan the QR code with WeChat to complete payment</p>
                                     <canvas id="wechat-pay-qrcode" class="mx-auto mb-3"></canvas>
-                                    <p class="text-xs text-gray-500 break-all">訂單號：<span id="wechat-order-no">-</span></p>
-                                    <p class="text-sm text-blue-700 mt-2" id="wechat-order-status">等待支付...</p>
+                                    <p class="text-xs text-gray-500 break-all">Order No: <span id="wechat-order-no">-</span></p>
+                                    <p class="text-sm text-blue-700 mt-2" id="wechat-order-status">Waiting for payment...</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 活动上传表单区域 -->
+                <!-- Activity Upload Section -->
                 <div id="activity-upload-section" class="hidden">
 
-                <!-- 上传表单 -->
+                <!-- Upload Form -->
                 <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-                    <h3 class="text-xl font-bold text-brand-dark mb-6">📸 分享您的活動</h3>
+                    <h3 class="text-xl font-bold text-brand-dark mb-6">📸 Share Your Activity</h3>
                     <form id="winwin-form" onsubmit="submitActivity(event)" class="space-y-6">
-                        <!-- 固定任务选择 -->
+                        <!-- Task Selection -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">選擇任務（1-20） *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Task (1-20) *</label>
                             <select id="activity-task-id" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none bg-white">
-                                <option value="">請先選擇任務</option>
+                                <option value="">Please select a task first</option>
                             </select>
-                            <p class="text-xs text-gray-500 mt-2">任務內容固定，共 20 項。</p>
+                            <p class="text-xs text-gray-500 mt-2">There are 20 fixed tasks in total.</p>
                         </div>
 
-                        <!-- 活动描述 -->
+                        <!-- Activity Description -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">活動描述 / 反思 *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Activity Description / Reflection *</label>
                             <textarea id="activity-description" required rows="4"
-                                      placeholder="請描述你如何完成此任務，以及你的感受..."
+                                      placeholder="Describe how you completed this task and your feelings..."
                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none resize-none"></textarea>
                         </div>
 
-                        <!-- 文件上传 -->
+                        <!-- File Upload -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">上傳照片或影片 *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Photos or Videos *</label>
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-brand-orange transition">
                                 <input type="file" id="activity-files" accept="image/*,video/*" multiple
                                        class="hidden" onchange="addFiles()">
                                 <label for="activity-files" class="cursor-pointer">
                                     <div class="text-brand-orange text-4xl mb-2">📁</div>
-                                    <p class="text-gray-600 font-medium">點擊選擇檔案</p>
-                                    <p class="text-sm text-gray-500 mt-2">支援圖片（JPG、PNG）和影片（MP4、MOV）</p>
-                                    <p class="text-sm text-brand-orange font-medium mt-1">✨ 最多可上傳 5 個檔案</p>
-                                    <p class="text-xs text-gray-400 mt-2">💡 可以多次點擊添加不同的文件</p>
+                                    <p class="text-gray-600 font-medium">Click to Select Files</p>
+                                    <p class="text-sm text-gray-500 mt-2">Supports images (JPG, PNG) and videos (MP4, MOV)</p>
+                                    <p class="text-sm text-brand-orange font-medium mt-1">✨ Upload up to 5 files</p>
+                                    <p class="text-xs text-gray-400 mt-2">💡 You can add different files by clicking multiple times</p>
                                 </label>
                             </div>
                             <div id="file-list" class="mt-3 space-y-2"></div>
                         </div>
 
-                        <!-- 提交按钮 -->
+                        <!-- Submit Button -->
                         <div class="flex gap-4">
                             <button type="submit" class="flex-1 bg-brand-orange text-white py-3 px-6 rounded-lg font-medium hover:bg-orange-600 transition">
-                                提交活動記錄
+                                Submit Activity
                             </button>
                             <button type="button" onclick="resetWinWinForm()" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                                清空
+                                Clear
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <!-- 已提交的活动列表 -->
+                <!-- Submitted Activities List -->
                 <div class="bg-gray-50 rounded-lg p-6">
-                    <h3 class="text-xl font-bold text-brand-dark mb-4">📋 我的活動記錄</h3>
+                    <h3 class="text-xl font-bold text-brand-dark mb-4">📋 My Activity Records</h3>
                     <div id="activities-list" class="space-y-4">
-                        <p class="text-gray-500 text-center py-8">還沒有活動記錄，快來分享您的第一個活動吧！</p>
+                        <p class="text-gray-500 text-center py-8">No activities yet. Share your first activity now!</p>
                     </div>
                 </div>
 
-                </div><!-- 关闭 activity-upload-section -->
-            </div><!-- 关闭 content-winwin -->
+                </div><!-- Close activity-upload-section -->
+            </div><!-- Close content-winwin -->
 
         </div>
     </main>
 
-    <!-- 页脚 -->
+    <!-- Footer -->
     <footer class="bg-white border-t mt-10">
         <div class="container mx-auto px-4 py-8">
             <div class="flex flex-col md:flex-row justify-between gap-8 text-sm text-gray-600">
-                <!-- 左侧联系信息 -->
+                <!-- Left: Contact Info -->
                 <div class="space-y-2">
-                    <h4 class="font-bold text-brand-dark text-lg mb-2">代代共荣有限公司</h4>
+                    <h4 class="font-bold text-brand-dark text-lg mb-2">Generation Co-prosperity Limited</h4>
                     <p class="flex items-center gap-2">
                         <span class="w-4">📧</span> 
-                        電子郵件：info@gencoprosperity.org (範例)
+                        Email: info@gencoprosperity.org (Example)
                     </p>
                     <p class="flex items-center gap-2">
                         <span class="w-4">📞</span> 
-                        電話：+852 1234 5678
+                        Phone: +852 1234 5678
                     </p>
                 </div>
-                <!-- 右侧地址信息 -->
+                <!-- Right: Address -->
                 <div class="space-y-2">
-                    <h4 class="font-bold text-brand-dark text-lg mb-2">辦事處地址</h4>
-                    <p>香港屯門德雅工業中心 (參考地址)</p>
-                    <p>Block C6, 16/F, Deyla Ind. Center, Tuen Mun, HK</p>
+                    <h4 class="font-bold text-brand-dark text-lg mb-2">Office Address</h4>
+                    <p>Block C6, 16/F, Deyla Ind. Center, Tuen Mun, HK (Reference Address)</p>
                 </div>
             </div>
         </div>
         
-        <!-- 底部橙色版权条 -->
+        <!-- Bottom Orange Copyright Bar -->
         <div class="bg-brand-orange text-white py-4 text-center text-xs md:text-sm">
             <div class="container mx-auto px-4 flex flex-col md:flex-row justify-center md:justify-between items-center gap-2">
                 <p>© 2025 by Generation Co-prosperity Limited. All Rights Reserved.</p>
                 <div class="space-x-4">
-                    <a href="#" class="hover:underline">Private Policy</a>
+                    <a href="#" class="hover:underline">Privacy Policy</a>
                     <a href="#" class="hover:underline">Refund Policy</a>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- 全屏登录/注册弹窗 -->
+    <!-- Full-screen Login/Register Modal -->
     <div id="auth-modal" class="fixed inset-0 z-[100] hidden">
-        <!-- 背景遮罩 -->
+        <!-- Background Overlay -->
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
         
-        <!-- 弹窗主体 -->
+        <!-- Modal Content -->
         <div class="relative bg-white w-full max-w-md mx-auto mt-20 md:mt-32 rounded-lg shadow-2xl overflow-hidden animate-[fadeIn_0.3s_ease-out]">
-            <!-- 关闭按钮 -->
+            <!-- Close Button -->
             <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
 
-            <!-- 登录表单 -->
+            <!-- Login Form -->
             <div id="login-form" class="p-8">
                 <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-brand-orange">會員登入</h3>
-                    <p class="text-sm text-gray-500 mt-2">歡迎回到代代共荣大家庭</p>
+                    <h3 class="text-2xl font-bold text-brand-orange">Login</h3>
+                    <p class="text-sm text-gray-500 mt-2">Welcome back to the Generation Co-prosperity family</p>
                 </div>
                 <form onsubmit="handleAuth(event, 'login')">
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">電子郵件 / 會員編號</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email / Member ID</label>
                             <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="example@email.com">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                             <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="••••••••">
                         </div>
                         <div class="flex items-center justify-between text-sm">
                             <label class="flex items-center">
                                 <input type="checkbox" class="text-brand-orange focus:ring-brand-orange border-gray-300 rounded">
-                                <span class="ml-2 text-gray-600">記住我</span>
+                                <span class="ml-2 text-gray-600">Remember me</span>
                             </label>
-                            <a href="#" class="text-brand-orange hover:underline">忘記密碼？</a>
+                            <a href="#" class="text-brand-orange hover:underline">Forgot password?</a>
                         </div>
                         <button type="submit" class="w-full bg-brand-orange text-white py-2.5 rounded font-bold hover:bg-orange-600 transition shadow-md">
-                            立即登入
+                            Login Now
                         </button>
                     </div>
                 </form>
                 <div class="mt-6 text-center text-sm text-gray-600">
-                    還不是會員？ 
-                    <button onclick="switchModalMode('register')" class="text-brand-orange font-bold hover:underline">立即註冊</button>
+                    Not a member yet? 
+                    <button onclick="switchModalMode('register')" class="text-brand-orange font-bold hover:underline">Register now</button>
                 </div>
             </div>
 
-            <!-- 注册表单 (默认隐藏) -->
+            <!-- Register Form (hidden by default) -->
             <div id="register-form" class="p-8 hidden">
                 <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-brand-orange">會員註冊</h3>
-                    <p class="text-sm text-gray-500 mt-2">加入我們，共建跨代共融</p>
+                    <h3 class="text-2xl font-bold text-brand-orange">Register</h3>
+                    <p class="text-sm text-gray-500 mt-2">Join us and build intergenerational harmony together</p>
                 </div>
                 <form onsubmit="handleAuth(event, 'register')">
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">姓氏</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
                                 <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">名字</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                                 <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">電子郵件</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                             <input id="register-email" type="email" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">驗證碼</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
                             <div class="flex gap-2">
-                                <input id="verification-code" type="text" required maxlength="5" pattern="[0-9]{5}" placeholder="請輸入5位數驗證碼" class="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
+                                <input id="verification-code" type="text" required maxlength="5" pattern="[0-9]{5}" placeholder="Enter 5-digit code" class="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                                 <button type="button" id="send-code-btn" onclick="sendVerificationCode()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition whitespace-nowrap font-medium">
-                                    發送驗證碼
+                                    Send Code
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">設定密碼</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Set Password</label>
                             <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                         </div>
                         <button type="submit" class="w-full bg-brand-orange text-white py-2.5 rounded font-bold hover:bg-orange-600 transition shadow-md">
-                            創建帳戶
+                            Create Account
                         </button>
                     </div>
                 </form>
                 <div class="mt-6 text-center text-sm text-gray-600">
-                    已經有帳號？ 
-                    <button onclick="switchModalMode('login')" class="text-brand-orange font-bold hover:underline">直接登入</button>
+                    Already have an account? 
+                    <button onclick="switchModalMode('login')" class="text-brand-orange font-bold hover:underline">Login here</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 移动端菜单切换
+        // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         }
 
-        // 标签页切换逻辑
+        // Tab switching logic
         function switchTab(tabName) {
             const contents = document.querySelectorAll('.content-section');
             contents.forEach(content => content.classList.add('hidden'));
@@ -541,7 +531,7 @@
             if (targetTab) targetTab.classList.add('active');
         }
 
-        // --- 登录/注册 弹窗逻辑 ---
+        // --- Login/Register Modal Logic ---
         
         const modal = document.getElementById('auth-modal');
         const loginForm = document.getElementById('login-form');
@@ -566,7 +556,7 @@
             }
         }
 
-        // 处理登录/注册 (连接后端)
+        // Handle Login/Register (connect to backend)
         async function handleAuth(event, type) {
             event.preventDefault(); 
             
@@ -574,11 +564,10 @@
             const btn = form.querySelector('button[type="submit"]');
             const originalText = btn.innerText;
             
-            // 获取 Inputs
+            // Get Inputs
             const inputs = form.querySelectorAll('input');
             let payload = {};
 
-            // 简单的根据索引获取值 (确保 HTML 结构未变)
             if (type === 'login') {
                 payload = {
                     email: inputs[0].value,
@@ -594,11 +583,11 @@
                 };
             }
 
-            btn.innerText = '處理中...';
+            btn.innerText = 'Processing...';
             btn.disabled = true;
 
             try {
-                console.log(`正在连接后端: http://127.0.0.1:3000/api/${type}`);
+                console.log(`Connecting to backend: http://127.0.0.1:3000/api/${type}`);
                 
                 const response = await fetch(`http://127.0.0.1:3000/api/${type}`, {
                     method: 'POST',
@@ -606,58 +595,53 @@
                     body: JSON.stringify(payload)
                 });
 
-                console.log('收到响应:', response);
+                console.log('Received response:', response);
 
                 let data = null;
                 try {
-                    // 尝试解析后端返回的 JSON，便于拿到具體錯誤訊息
                     data = await response.json();
                 } catch (parseError) {
-                    console.warn('解析後端返回 JSON 失敗:', parseError);
+                    console.warn('Failed to parse JSON response:', parseError);
                 }
 
-                // 如果後端有提供明確 message，優先顯示給使用者
                 if (!response.ok) {
                     const msg = data && data.message
                         ? data.message
-                        : `操作失敗（HTTP 狀態碼：${response.status}）`;
+                        : `Operation failed (HTTP status: ${response.status})`;
                     alert(msg);
                     return;
                 }
 
-                // 走到這裡代表 HTTP 狀態碼為 2xx
                 if (data && data.success) {
                     closeModal();
                     
-                    // 檢查是否是管理員
+                    // Check if admin
                     if (data.user && data.user.isAdmin && type === 'login') {
-                        // 管理員登錄：保存信息並跳轉到管理頁面
                         sessionStorage.setItem('userInfo', JSON.stringify(data.user));
-                        alert('歡迎，管理員！正在跳轉到管理後台...');
+                        alert('Welcome, Admin! Redirecting to admin dashboard...');
                         window.location.href = 'admin.html';
                         return;
                     }
                     
-                    // 一般會員
+                    // Regular user
                     if (data.user) {
                         updateUIState(true, data.user);
                     }
-                    alert(data.message || '操作成功');
+                    alert(data.message || 'Operation successful');
                     form.reset();
                 } else {
-                    alert((data && data.message) || '操作失敗');
+                    alert((data && data.message) || 'Operation failed');
                 }
             } catch (error) {
-                console.error('登录/注册详细错误:', error);
-                // 只有真正無法連接後端時，才提示檢查端口/防火牆
-                alert(`連接後端失敗！\n錯誤詳情: ${error.message}\n\n請檢查：\n1. 後端是否運行在 3000 端口？\n2. 是否有防火牆或代理攔截？`);
+                console.error('Login/Register error:', error);
+                alert(`Failed to connect to backend!\nError: ${error.message}\n\nPlease check:\n1. Is the backend running on port 3000?\n2. Is there a firewall or proxy blocking?`);
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         }
 
-        // 更新 UI 状态 (显示/隐藏登录按钮)
+        // Update UI state (show/hide login buttons)
         function updateUIState(isLoggedIn, user) {
             const authBtns = document.getElementById('auth-buttons-desktop');
             const userInfo = document.getElementById('user-info-desktop');
@@ -667,17 +651,15 @@
             if (isLoggedIn) {
                 authBtns.classList.add('hidden');
                 userInfo.classList.remove('hidden');
-                userInfo.classList.add('flex'); // 确保 flex 布局生效
+                userInfo.classList.add('flex');
                 
                 if (user) {
-                    // 检查 user 对象结构，兼容数据库字段(snake_case)和前端字段(camelCase)
                     const lastName = user.lastName || user.last_name || '';
                     const firstName = user.firstName || user.first_name || '';
-                    const fullName = `${lastName}${firstName}`.trim() || '會員';
+                    const fullName = `${lastName}${firstName}`.trim() || 'Member';
                     nameDisplay.textContent = fullName;
                     nameDisplay.title = fullName;
                     
-                    // 检查是否是管理员，显示/隐藏侧边栏管理后台入口
                     if (user.isAdmin) {
                         if (sidebarAdminLink) sidebarAdminLink.classList.remove('hidden');
                     } else {
@@ -685,7 +667,6 @@
                     }
                 }
 
-                // --- 新增：保存登录信息到 sessionStorage ---
                 if (user) {
                     sessionStorage.setItem('userInfo', JSON.stringify(user));
                     if (typeof currentUser !== 'undefined') {
@@ -696,13 +677,11 @@
                 authBtns.classList.remove('hidden');
                 userInfo.classList.add('hidden');
                 userInfo.classList.remove('flex');
-                nameDisplay.textContent = '會員';
-                nameDisplay.title = '會員';
+                nameDisplay.textContent = 'Member';
+                nameDisplay.title = 'Member';
                 
-                // 隐藏侧边栏管理后台入口
                 if (sidebarAdminLink) sidebarAdminLink.classList.add('hidden');
 
-                // --- 新增：清除登录信息 ---
                 sessionStorage.removeItem('userInfo');
                 if (typeof currentUser !== 'undefined') {
                     currentUser = null;
@@ -715,14 +694,14 @@
                 sessionStorage.removeItem('userInfo');
                 sessionStorage.removeItem('adminUser');
             } catch (error) {
-                console.warn('清理 sessionStorage 失敗:', error);
+                console.warn('Failed to clear sessionStorage:', error);
             }
 
             try {
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('adminUser');
             } catch (error) {
-                console.warn('清理 localStorage 失敗:', error);
+                console.warn('Failed to clear localStorage:', error);
             }
         }
 
@@ -747,13 +726,13 @@
                 logoutUrl.searchParams.set('_logout', Date.now().toString());
                 window.location.replace(logoutUrl.pathname + logoutUrl.search);
             } catch (error) {
-                console.error('登出错误:', error);
+                console.error('Logout error:', error);
                 clearClientAuthState();
                 window.location.replace('index.html?_logout=' + Date.now());
             }
         }
 
-        // 发送验证码
+        // Send verification code
         let countdownTimer = null;
         async function sendVerificationCode() {
             const emailInput = document.getElementById('register-email');
@@ -761,23 +740,21 @@
             const email = emailInput.value.trim();
 
             if (!email) {
-                alert('請先輸入電子郵件');
+                alert('Please enter your email first');
                 emailInput.focus();
                 return;
             }
 
-            // 验证邮箱格式
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                alert('請輸入有效的電子郵件地址');
+                alert('Please enter a valid email address');
                 emailInput.focus();
                 return;
             }
 
-            // 禁用按钮
             sendBtn.disabled = true;
             const originalText = sendBtn.innerText;
-            sendBtn.innerText = '發送中...';
+            sendBtn.innerText = 'Sending...';
 
             try {
                 const response = await fetch('http://127.0.0.1:3000/api/send-verification-code', {
@@ -791,14 +768,13 @@
                 if (data.success) {
                     alert(data.message);
                     
-                    // 開始倒計時（前端限制：5 秒後可重新發送）
                     let countdown = 5;
-                    sendBtn.innerText = `${countdown}秒後重發`;
+                    sendBtn.innerText = `Resend in ${countdown}s`;
                     
                     countdownTimer = setInterval(() => {
                         countdown--;
                         if (countdown > 0) {
-                            sendBtn.innerText = `${countdown}秒後重發`;
+                            sendBtn.innerText = `Resend in ${countdown}s`;
                         } else {
                             clearInterval(countdownTimer);
                             sendBtn.innerText = originalText;
@@ -806,21 +782,20 @@
                         }
                     }, 1000);
                 } else {
-                    alert(data.message || '發送失敗');
+                    alert(data.message || 'Failed to send');
                     sendBtn.innerText = originalText;
                     sendBtn.disabled = false;
                 }
             } catch (error) {
                 console.error(error);
-                alert('無法連接伺服器');
+                alert('Cannot connect to server');
                 sendBtn.innerText = originalText;
                 sendBtn.disabled = false;
             }
         }
 
-        // --- IG Finisher Program功能 ---
+        // --- IG Finisher Program Features ---
         
-        // 全局变量：当前登录用户
         let currentUser = null;
 
         const INTERGENERATIONAL_TASKS = [
@@ -846,7 +821,6 @@
             'Share a joke with a grandparent or a person who is at least 60 years older than you.'
         ];
         
-        // 全局变量：已选择的文件数组
         let selectedFiles = [];
         let paymentPollingTimer = null;
 
@@ -862,23 +836,19 @@
             });
         }
 
-        // 检查登录并导航
+        // Check login and navigate
         async function checkLoginAndNavigate(tabName) {
-            // 从 sessionStorage 获取登录状态
             const userInfo = sessionStorage.getItem('userInfo');
             
             if (!userInfo) {
-                // 未登录，提示用户
-                alert('請先登入才能訪問 IG Finisher Program活動！');
+                alert('Please login first to access the IG Finisher Program!');
                 openModal('login');
                 return;
             }
 
-            // 已登录，设置当前用户并切换页面
             currentUser = JSON.parse(userInfo);
             switchTab(tabName);
             
-            // 检查支付状态
             await checkPaymentStatus();
         }
 
@@ -904,20 +874,19 @@
 
             if (orderBox) orderBox.classList.add('hidden');
             if (orderNo) orderNo.textContent = '-';
-            if (orderStatus) orderStatus.textContent = '等待支付...';
+            if (orderStatus) orderStatus.textContent = 'Waiting for payment...';
             if (qrCanvas) {
                 const ctx = qrCanvas.getContext('2d');
                 if (ctx) ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
             }
         }
 
-        // 检查用户支付状态
+        // Check user payment status
         async function checkPaymentStatus(options = {}) {
             if (!currentUser) return;
             const paymentVerification = document.getElementById('payment-verification');
             const activityUploadSection = document.getElementById('activity-upload-section');
 
-            // 当前版本：活动免支付，直接开放上传区
             paymentVerification.classList.add('hidden');
             activityUploadSection.classList.remove('hidden');
             stopPaymentPolling();
@@ -926,7 +895,7 @@
             loadUserActivities();
         }
 
-        // 创建微信支付订单并显示二维码
+        // Create WeChat Pay order and display QR code
         async function createWechatOrder() {
             if (!currentUser) return;
 
@@ -940,7 +909,7 @@
 
             try {
                 createBtn.disabled = true;
-                createBtn.innerText = '生成中...';
+                createBtn.innerText = 'Generating...';
 
                 const response = await fetch('http://127.0.0.1:3000/api/wechat/create-order', {
                     method: 'POST',
@@ -950,7 +919,7 @@
                 const data = await response.json();
 
                 if (!response.ok || !data.success) {
-                    alert(data.message || '建立微信支付訂單失敗');
+                    alert(data.message || 'Failed to create WeChat Pay order');
                     return;
                 }
 
@@ -961,7 +930,7 @@
 
                 paymentAmount.textContent = (data.amount / 100).toFixed(2);
                 orderNo.textContent = data.outTradeNo || '-';
-                orderStatus.textContent = data.message || '請在微信內完成支付';
+                orderStatus.textContent = data.message || 'Please complete payment in WeChat';
 
                 await QRCode.toCanvas(qrCanvas, data.codeUrl, {
                     width: 240,
@@ -971,49 +940,41 @@
                 orderBox.classList.remove('hidden');
                 startPaymentPolling();
             } catch (error) {
-                console.error('创建微信订单失败:', error);
-                alert('建立微信支付訂單失敗');
+                console.error('Failed to create WeChat order:', error);
+                alert('Failed to create WeChat Pay order');
             } finally {
                 createBtn.disabled = false;
                 createBtn.innerText = originalText;
             }
         }
 
-        // 添加文件到列表（累积添加，不覆盖）
+        // Add files to list (cumulative, not overwrite)
         function addFiles() {
             const fileInput = document.getElementById('activity-files');
             const MAX_FILES = 5;
             
             if (fileInput.files.length === 0) return;
             
-            // 将新选择的文件添加到数组
             const newFiles = Array.from(fileInput.files);
             
-            // 检查添加后的总数量
             if (selectedFiles.length + newFiles.length > MAX_FILES) {
-                alert(`⚠️ 最多只能上傳 ${MAX_FILES} 個檔案！\n當前已選擇 ${selectedFiles.length} 個，您嘗試再添加 ${newFiles.length} 個。`);
-                fileInput.value = ''; // 清空input
+                alert(`⚠️ Maximum ${MAX_FILES} files allowed!\nCurrently selected: ${selectedFiles.length}, trying to add: ${newFiles.length}.`);
+                fileInput.value = '';
                 return;
             }
             
-            // 添加新文件到数组
             selectedFiles = selectedFiles.concat(newFiles);
-            
-            // 清空input，以便可以再次选择相同的文件
             fileInput.value = '';
-            
-            // 更新显示
             renderFileList();
         }
         
-        // 渲染文件列表显示
+        // Render file list display
         function renderFileList() {
             const fileList = document.getElementById('file-list');
             fileList.innerHTML = '';
             
             if (selectedFiles.length === 0) return;
             
-            // 显示每个文件
             selectedFiles.forEach((file, index) => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-3 py-2 rounded hover:bg-gray-200 transition';
@@ -1021,46 +982,44 @@
                     <span>📎</span>
                     <span class="flex-1 truncate">${file.name}</span>
                     <span class="text-xs text-gray-400">${(file.size / 1024).toFixed(1)} KB</span>
-                    <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 font-bold px-2" title="刪除此文件">
+                    <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 font-bold px-2" title="Remove this file">
                         ✕
                     </button>
                 `;
                 fileList.appendChild(fileItem);
             });
             
-            // 显示已选择文件数量和状态
             const countInfo = document.createElement('div');
             countInfo.className = 'text-sm font-medium mt-2 flex items-center justify-between';
             countInfo.innerHTML = `
-                <span class="text-brand-orange">✅ 已選擇 ${selectedFiles.length} 個檔案</span>
+                <span class="text-brand-orange">✅ ${selectedFiles.length} file(s) selected</span>
                 <button type="button" onclick="clearAllFiles()" class="text-xs text-red-500 hover:text-red-700 underline">
-                    清空全部
+                    Clear All
                 </button>
             `;
             fileList.appendChild(countInfo);
         }
         
-        // 删除单个文件
+        // Remove single file
         function removeFile(index) {
             selectedFiles.splice(index, 1);
             renderFileList();
         }
         
-        // 清空所有文件
+        // Clear all files
         function clearAllFiles() {
-            if (confirm('確定要清空所有已選擇的文件嗎？')) {
+            if (confirm('Are you sure you want to clear all selected files?')) {
                 selectedFiles = [];
                 renderFileList();
             }
         }
 
-        // 提交活动记录
+        // Submit activity
         async function submitActivity(event) {
             event.preventDefault();
             
-            // 检查登录状态
             if (!currentUser) {
-                alert('請先登入！');
+                alert('Please login first!');
                 openModal('login');
                 return;
             }
@@ -1069,38 +1028,34 @@
             const description = document.getElementById('activity-description').value;
 
             if (!taskId || !description) {
-                alert('請先選擇任務並填寫活動描述');
+                alert('Please select a task and fill in the activity description');
                 return;
             }
             
             if (selectedFiles.length === 0) {
-                alert('請至少上傳一個檔案');
+                alert('Please upload at least one file');
                 return;
             }
             
-            // 验证文件数量
             const MAX_FILES = 5;
             if (selectedFiles.length > MAX_FILES) {
-                alert(`⚠️ 最多只能上傳 ${MAX_FILES} 個檔案！`);
+                alert(`⚠️ Maximum ${MAX_FILES} files allowed!`);
                 return;
             }
 
-            // 创建 FormData
             const formData = new FormData();
             formData.append('taskId', taskId);
             formData.append('description', description);
             formData.append('userEmail', currentUser.email);
             
-            // 添加所有文件
             selectedFiles.forEach(file => {
                 formData.append('files', file);
             });
 
             try {
-                // 显示加载状态
                 const submitBtn = document.querySelector('#winwin-form button[type="submit"]');
                 const originalText = submitBtn.innerText;
-                submitBtn.innerText = '上傳中...';
+                submitBtn.innerText = 'Uploading...';
                 submitBtn.disabled = true;
 
                 const response = await fetch('http://127.0.0.1:3000/api/activities', {
@@ -1111,38 +1066,37 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('活動記錄提交成功！');
+                    alert('Activity submitted successfully!');
                     resetWinWinForm();
-                    loadUserActivities(); // 重新加载活动列表
+                    loadUserActivities();
                 } else {
-                    // 处理权限错误
                     if (data.needsPayment) {
-                        alert(data.message || '暫時無法提交活動');
+                        alert(data.message || 'Unable to submit activity');
                         await checkPaymentStatus();
                     } else if (data.needsLogin) {
-                        alert(data.message || '登入狀態已失效，請重新登入');
+                        alert(data.message || 'Login session expired, please login again');
                         openModal('login');
                     } else {
-                        alert(data.message || '提交失敗');
+                        alert(data.message || 'Submission failed');
                     }
                 }
 
                 submitBtn.innerText = originalText;
                 submitBtn.disabled = false;
             } catch (error) {
-                console.error('提交失敗:', error);
-                alert('無法連接伺服器');
+                console.error('Submission failed:', error);
+                alert('Cannot connect to server');
             }
         }
 
-        // 重置表单
+        // Reset form
         function resetWinWinForm() {
             document.getElementById('winwin-form').reset();
-            selectedFiles = []; // 清空文件数组
-            renderFileList(); // 更新显示
+            selectedFiles = [];
+            renderFileList();
         }
 
-        // 加载用户的活动记录
+        // Load user activities
         async function loadUserActivities() {
             if (!currentUser) return;
 
@@ -1158,20 +1112,20 @@
                             <h4 class="text-lg font-bold text-brand-dark mb-2">${activity.title}</h4>
                             <p class="text-gray-600 mb-4">${activity.description}</p>
                             <div class="flex justify-between items-center text-sm text-gray-500">
-                                <span>📅 ${new Date(activity.created_at + 'Z').toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                                <span>📎 ${activity.file_count || 0} 個檔案</span>
+                                <span>📅 ${new Date(activity.created_at + 'Z').toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                <span>📎 ${activity.file_count || 0} file(s)</span>
                             </div>
                         </div>
                     `).join('');
                 } else {
-                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">還沒有活動記錄，快來分享您的第一個活動吧！</p>';
+                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No activities yet. Share your first activity now!</p>';
                 }
             } catch (error) {
-                console.error('加載活動失敗:', error);
+                console.error('Failed to load activities:', error);
             }
         }
 
-        // 页面加载时检查登录状态
+        // Check login status on page load
         window.addEventListener('DOMContentLoaded', () => {
             const currentUrl = new URL(window.location.href);
             if (currentUrl.searchParams.has('_logout')) {

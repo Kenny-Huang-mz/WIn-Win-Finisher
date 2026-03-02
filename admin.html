@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理員後台 - 代代共榮</title>
+    <title>Admin Dashboard - IG Finisher Program</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -20,133 +20,151 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- 顶部导航栏 -->
+        <!-- Header -->
         <header class="bg-gradient-to-r from-brand-orange to-orange-600 rounded-lg shadow-lg p-6 mb-8 text-white">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold">🎯 管理員後台</h1>
-                    <p class="mt-2 opacity-90">IG Finisher Program 管理系統</p>
+                    <h1 class="text-3xl font-bold">🎯 Admin Dashboard</h1>
+                    <p class="mt-2 opacity-90">IG Finisher Program Management System</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm opacity-90">登入身份</p>
-                    <p id="admin-name" class="font-bold">管理員</p>
+                    <p class="text-sm opacity-90">Logged in as</p>
+                    <p id="admin-name" class="font-bold">Admin</p>
                     <button onclick="logout()" class="mt-2 px-4 py-2 bg-white text-brand-orange rounded-lg hover:bg-gray-100 transition text-sm font-medium">
-                        登出
+                        Logout
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- 标签页导航 -->
+        <!-- Tab Navigation -->
         <div class="bg-white rounded-lg shadow-lg mb-6">
             <div class="flex border-b">
                 <button onclick="switchAdminTab('activities')" id="tab-activities" class="admin-tab px-6 py-4 font-medium border-b-2 border-brand-orange text-brand-orange">
-                    📋 所有活動記錄
+                    📋 All Activities
                 </button>
                 <button onclick="switchAdminTab('users')" id="tab-users" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
-                    👥 用戶進度
+                    👥 User Progress
                 </button>
                 <button onclick="switchAdminTab('tasks')" id="tab-tasks" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
-                    🧩 任務統計
+                    🧩 Task Statistics
+                </button>
+                <button onclick="switchAdminTab('prompts')" id="tab-prompts" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
+                    📐 Scoring Rubrics
                 </button>
                 <button onclick="switchAdminTab('files')" id="tab-files" class="admin-tab px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
-                    📁 所有上傳文件
+                    📁 All Files
                 </button>
                 <button onclick="window.location.href='index.html'" class="ml-auto px-6 py-4 font-medium text-gray-600 hover:text-brand-orange">
-                    🏠 返回主頁
+                    🏠 Back to Home
                 </button>
             </div>
         </div>
 
-        <!-- 内容区域 -->
+        <!-- Content Area -->
         <div id="content-area">
-            <!-- 所有活动记录 -->
+            <!-- All Activities -->
             <div id="content-activities" class="tab-content">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-brand-dark">所有活動記錄</h2>
+                        <h2 class="text-2xl font-bold text-brand-dark">All Activity Records</h2>
                         <button onclick="loadAllActivities()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
-                            🔄 刷新
+                            🔄 Refresh
                         </button>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">按用戶篩選（姓名/郵箱）</label>
-                            <input type="text" id="activity-search" placeholder="例如：alice 或 alice@mail.com"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Filter by User (Name/Email)</label>
+                            <input type="text" id="activity-search" placeholder="e.g., alice or alice@mail.com"
                                    oninput="filterActivities()"
                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">按任務篩選（1-20）</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Task (1-20)</label>
                             <select id="activity-task-filter" onchange="filterActivities()"
                                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none bg-white">
-                                <option value="">全部任務</option>
+                                <option value="">All Tasks</option>
                             </select>
                         </div>
                     </div>
 
                     <div id="activities-list" class="space-y-4">
-                        <p class="text-gray-500 text-center py-8">加載中...</p>
+                        <p class="text-gray-500 text-center py-8">Loading...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 用戶進度 -->
+            <!-- User Progress -->
             <div id="content-users" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-brand-dark">用戶任務完成進度</h2>
+                        <h2 class="text-2xl font-bold text-brand-dark">User Task Completion Progress</h2>
                         <button onclick="loadUserProgress()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
-                            🔄 刷新
+                            🔄 Refresh
                         </button>
                     </div>
                     <div id="users-progress-list" class="space-y-4">
-                        <p class="text-gray-500 text-center py-8">加載中...</p>
+                        <p class="text-gray-500 text-center py-8">Loading...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 任務統計 -->
+            <!-- Task Statistics -->
             <div id="content-tasks" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-brand-dark">任務提交統計（1-20）</h2>
+                        <h2 class="text-2xl font-bold text-brand-dark">Task Submission Statistics (1-20)</h2>
                         <button onclick="loadTaskOverview()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
-                            🔄 刷新
+                            🔄 Refresh
                         </button>
                     </div>
                     <div id="tasks-overview-list" class="space-y-4">
-                        <p class="text-gray-500 text-center py-8">加載中...</p>
+                        <p class="text-gray-500 text-center py-8">Loading...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 所有上传文件 -->
+            <!-- Scoring Rubrics -->
+            <div id="content-prompts" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-brand-dark">Scoring Rubrics (One Prompt per Task)</h2>
+                        <button onclick="loadScoringPrompts()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <div id="prompts-list" class="space-y-4">
+                        <p class="text-gray-500 text-center py-8">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Files -->
             <div id="content-files" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-brand-dark">所有上傳文件</h2>
+                        <h2 class="text-2xl font-bold text-brand-dark">All Uploaded Files</h2>
                         <button onclick="loadAllFiles()" class="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600">
-                            🔄 刷新
+                            🔄 Refresh
                         </button>
                     </div>
                     
-                    <!-- 搜索框 -->
+                    <!-- Search Box -->
                     <div class="mb-6">
                         <div class="relative">
                             <input type="text" 
                                    id="file-search" 
-                                   placeholder="🔍 搜索用戶名或郵箱..." 
+                                   placeholder="🔍 Search by username or email..." 
                                    oninput="filterFiles()"
                                    class="w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-lg focus:border-brand-orange focus:outline-none">
                             <span class="absolute left-4 top-3.5 text-gray-400 text-xl">🔍</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">💡 提示：可以搜索用戶名或郵箱來過濾文件</p>
+                        <p class="text-xs text-gray-500 mt-2">💡 Tip: Search by username or email to filter files</p>
                     </div>
                     
                     <div id="files-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <p class="text-gray-500 text-center py-8 col-span-full">加載中...</p>
+                        <p class="text-gray-500 text-center py-8 col-span-full">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -157,10 +175,12 @@
         let adminUser = null;
         let activitiesData = [];
         let filesData = [];
+        let gradesMap = {};
         const TASK_COUNT = 20;
+        const API_BASE = 'http://127.0.0.1:3000';
 
         function formatDateTime(dateString) {
-            return new Date(dateString + 'Z').toLocaleString('zh-TW', {
+            return new Date(dateString + 'Z').toLocaleString('en-US', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
@@ -182,12 +202,12 @@
             }
         }
 
-        // 页面加载时验证管理员身份
+        // Validate admin identity on page load
         window.addEventListener('DOMContentLoaded', () => {
             const userInfo = sessionStorage.getItem('userInfo');
 
             if (!userInfo) {
-                alert('請先登入！');
+                alert('Please login first!');
                 window.location.href = 'index.html';
                 return;
             }
@@ -195,7 +215,7 @@
             adminUser = JSON.parse(userInfo);
 
             if (!adminUser.isAdmin) {
-                alert('您沒有管理員權限！');
+                alert('You do not have admin privileges!');
                 window.location.href = 'index.html';
                 return;
             }
@@ -210,19 +230,19 @@
                 sessionStorage.removeItem('userInfo');
                 sessionStorage.removeItem('adminUser');
             } catch (error) {
-                console.warn('清理 sessionStorage 失敗:', error);
+                console.warn('Failed to clear sessionStorage:', error);
             }
 
             try {
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('adminUser');
             } catch (error) {
-                console.warn('清理 localStorage 失敗:', error);
+                console.warn('Failed to clear localStorage:', error);
             }
         }
 
         function logout() {
-            if (!confirm('確定要登出嗎？')) return;
+            if (!confirm('Are you sure you want to logout?')) return;
             clearClientAuthState();
             window.location.replace('index.html?_logout=' + Date.now());
         }
@@ -242,6 +262,7 @@
             if (tabName === 'activities') loadAllActivities();
             else if (tabName === 'users') loadUserProgress();
             else if (tabName === 'tasks') loadTaskOverview();
+            else if (tabName === 'prompts') loadScoringPrompts();
             else if (tabName === 'files') loadAllFiles();
         }
 
@@ -253,14 +274,30 @@
             if (taskId) params.set('taskId', taskId);
 
             try {
-                const response = await fetch(`http://127.0.0.1:3000/api/admin/all-activities?${params.toString()}`);
+                const response = await fetch(`${API_BASE}/api/admin/all-activities?${params.toString()}`);
                 const data = await response.json();
                 const listContainer = document.getElementById('activities-list');
 
                 if (data.success && data.activities.length > 0) {
                     activitiesData = data.activities;
-                    listContainer.innerHTML = data.activities.map((act, index) => `
-                        <div class="border rounded-lg p-6 hover:shadow-md transition">
+                    const ids = data.activities.map(a => a.id);
+                    gradesMap = {};
+                    if (ids.length > 0) {
+                        try {
+                            const grRes = await fetch(`${API_BASE}/api/admin/activity-grades?activity_ids=${ids.join(',')}`);
+                            const grData = await grRes.json();
+                            if (grData.success && grData.grades) {
+                                grData.grades.forEach(g => { gradesMap[g.activity_id] = g; });
+                            }
+                        } catch (e) { console.warn('Failed to load grades', e); }
+                    }
+                    listContainer.innerHTML = data.activities.map((act, index) => {
+                        const grade = gradesMap[act.id];
+                        const gradeHtml = grade
+                            ? `<div class="mt-3 p-3 bg-orange-50 rounded border border-orange-100 text-sm"><span class="font-medium text-brand-orange">Score: ${grade.score != null ? grade.score : '—'}</span><br><span class="text-gray-700">${(grade.feedback || '').substring(0, 200)}${(grade.feedback && grade.feedback.length > 200) ? '…' : ''}</span><br><span class="text-gray-500 text-xs">Graded at: ${formatDateTime(grade.graded_at)}</span></div>`
+                            : '';
+                        return `
+                        <div class="border rounded-lg p-6 hover:shadow-md transition" id="activity-card-${index}">
                             <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3 mb-4">
                                 <div>
                                     <h3 class="text-lg font-bold text-brand-dark">${act.title}</h3>
@@ -272,20 +309,198 @@
                                 </div>
                             </div>
                             <p class="text-gray-700 mb-4">${act.description}</p>
-                            <div class="flex items-center gap-4 text-sm text-gray-600">
-                                <span>📎 ${act.file_count} 個檔案</span>
-                                <button onclick="viewActivityFiles(${index})" class="text-brand-orange hover:underline">查看檔案</button>
+                            <div class="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                                <span>📎 ${act.file_count} file(s)</span>
+                                <button onclick="viewActivityFiles(${index})" class="text-brand-orange hover:underline">View Files</button>
+                                <button onclick="gradeActivity(${index})" id="grade-btn-${index}" class="px-3 py-1 bg-brand-orange text-white rounded hover:bg-orange-600">AI Grade</button>
                             </div>
+                            <div id="activity-grade-${index}">${gradeHtml}</div>
                             <div id="activity-files-${index}" class="hidden mt-4 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
                 } else {
                     activitiesData = [];
-                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">暫無符合條件的活動記錄</p>';
+                    gradesMap = {};
+                    listContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No activity records found</p>';
                 }
             } catch (error) {
-                console.error('加載活動失敗:', error);
-                document.getElementById('activities-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
+                console.error('Failed to load activities:', error);
+                document.getElementById('activities-list').innerHTML = '<p class="text-red-500 text-center py-8">Failed to load</p>';
+            }
+        }
+
+        async function gradeActivity(index) {
+            const act = activitiesData[index];
+            if (!act || !act.id) return;
+            const btn = document.getElementById(`grade-btn-${index}`);
+            const gradeDiv = document.getElementById(`activity-grade-${index}`);
+            if (btn) { btn.disabled = true; btn.textContent = 'Grading…'; }
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/grade-activity`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ activity_id: act.id })
+                });
+                const text = await res.text();
+                let data = null;
+                try { data = text ? JSON.parse(text) : {}; } catch (_) {}
+                if (!data) {
+                    alert('Grading failed: Server returned non-JSON response (' + res.status + '). Please ensure the backend is running and QWEN_API_KEY is set, then restart.');
+                    if (btn) { btn.disabled = false; btn.textContent = 'AI Grade'; }
+                    return;
+                }
+                if (data.success && gradeDiv) {
+                    gradesMap[act.id] = { activity_id: act.id, score: data.score, feedback: data.feedback, graded_at: data.graded_at };
+                    const g = gradesMap[act.id];
+                    gradeDiv.innerHTML = `<div class="mt-3 p-3 bg-orange-50 rounded border border-orange-100 text-sm"><span class="font-medium text-brand-orange">Score: ${g.score != null ? g.score : '—'}</span><br><span class="text-gray-700">${(g.feedback || '').substring(0, 200)}${(g.feedback && g.feedback.length > 200) ? '…' : ''}</span><br><span class="text-gray-500 text-xs">Graded at: ${formatDateTime(g.graded_at)}</span></div>`;
+                } else {
+                    const msg = data.message || 'Grading failed';
+                    if (msg.indexOf('QWEN_API_KEY') !== -1) {
+                        alert(msg + '\n\nPlease run before starting the backend:\nexport QWEN_API_KEY="your API Key"\nThen restart: node server.js');
+                    } else {
+                        alert(msg);
+                    }
+                }
+            } catch (e) {
+                const errMsg = (e && e.message) ? e.message : String(e);
+                alert('Grading request failed: ' + errMsg + '\n\nIf this is a network error, please ensure the backend is running at ' + API_BASE + ' and QWEN_API_KEY is set.');
+            }
+            if (btn) { btn.disabled = false; btn.textContent = 'AI Grade'; }
+        }
+
+        async function loadScoringPrompts() {
+            const container = document.getElementById('prompts-list');
+            if (!container) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/scoring-prompts`);
+                const data = await res.json();
+                if (!data.success || !data.prompts) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">Failed to load scoring rubrics</p>';
+                    return;
+                }
+                const prompts = data.prompts.sort((a, b) => a.task_id - b.task_id);
+                container.innerHTML = prompts.map(p => {
+                    const summary = (p.prompt || '').length > 80 ? (p.prompt.substring(0, 80) + '…') : (p.prompt || '');
+                    return `
+                    <div class="border rounded-lg p-4" id="prompt-row-${p.task_id}">
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-bold text-brand-dark">Task ${p.task_id}</h3>
+                                <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${escapeHtml(summary)}</p>
+                                <p class="text-xs text-gray-400 mt-1">Updated: ${p.updated_at ? formatDateTime(p.updated_at) : '—'}</p>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="optimizePrompt(${p.task_id})" id="prompt-opt-btn-${p.task_id}" class="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 shrink-0">✨ AI Optimize</button>
+                                <button onclick="togglePromptEdit(${p.task_id})" id="prompt-edit-btn-${p.task_id}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 shrink-0">Edit</button>
+                            </div>
+                        </div>
+                        <div id="prompt-edit-${p.task_id}" class="hidden mt-4">
+                            <textarea id="prompt-text-${p.task_id}" rows="6" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent">${escapeHtml(p.prompt || '')}</textarea>
+                            <div class="mt-2 flex gap-2">
+                                <button onclick="saveScoringPrompt(${p.task_id})" class="px-4 py-2 bg-brand-orange text-white rounded hover:bg-orange-600">Save</button>
+                                <button onclick="togglePromptEdit(${p.task_id})" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+                            </div>
+                        </div>
+                        <div id="prompt-opt-result-${p.task_id}" class="hidden mt-4">
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                <h4 class="font-medium text-purple-800 mb-2">✨ AI Optimization Suggestion:</h4>
+                                <textarea id="prompt-opt-text-${p.task_id}" rows="6" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"></textarea>
+                                <div class="mt-2 flex gap-2">
+                                    <button onclick="applyOptimizedPrompt(${p.task_id})" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Use Optimized Version</button>
+                                    <button onclick="hideOptResult(${p.task_id})" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.error('Failed to load scoring rubrics', e);
+                container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load</p>';
+            }
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        function togglePromptEdit(taskId) {
+            const el = document.getElementById(`prompt-edit-${taskId}`);
+            const btn = document.getElementById(`prompt-edit-btn-${taskId}`);
+            if (!el) return;
+            el.classList.toggle('hidden');
+            if (btn) btn.textContent = el.classList.contains('hidden') ? 'Edit' : 'Collapse';
+        }
+
+        async function saveScoringPrompt(taskId) {
+            const textarea = document.getElementById(`prompt-text-${taskId}`);
+            if (!textarea || !textarea.value.trim()) {
+                alert('Scoring rubric cannot be empty');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/scoring-prompts`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: taskId, prompt: textarea.value.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    togglePromptEdit(taskId);
+                    loadScoringPrompts();
+                } else {
+                    alert(data.message || 'Failed to save');
+                }
+            } catch (e) {
+                alert('Save request failed');
+            }
+        }
+
+        async function optimizePrompt(taskId) {
+            const btn = document.getElementById(`prompt-opt-btn-${taskId}`);
+            if (btn) { btn.disabled = true; btn.textContent = 'Optimizing…'; }
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/optimize-prompt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: taskId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const optText = document.getElementById(`prompt-opt-text-${taskId}`);
+                    const optResult = document.getElementById(`prompt-opt-result-${taskId}`);
+                    if (optText && optResult) {
+                        optText.value = data.optimized_prompt || '';
+                        optResult.classList.remove('hidden');
+                    }
+                } else {
+                    alert(data.message || 'Optimization failed');
+                }
+            } catch (e) {
+                const errMsg = (e && e.message) ? e.message : String(e);
+                alert('Optimization request failed: ' + errMsg);
+            }
+            if (btn) { btn.disabled = false; btn.textContent = '✨ AI Optimize'; }
+        }
+
+        function applyOptimizedPrompt(taskId) {
+            const optText = document.getElementById(`prompt-opt-text-${taskId}`);
+            const optResult = document.getElementById(`prompt-opt-result-${taskId}`);
+            const editDiv = document.getElementById(`prompt-edit-${taskId}`);
+            const textarea = document.getElementById(`prompt-text-${taskId}`);
+            if (optText && textarea && optResult && editDiv) {
+                textarea.value = optText.value;
+                optResult.classList.add('hidden');
+                editDiv.classList.remove('hidden');
+            }
+        }
+
+        function hideOptResult(taskId) {
+            const optResult = document.getElementById(`prompt-opt-result-${taskId}`);
+            if (optResult) {
+                optResult.classList.add('hidden');
             }
         }
 
@@ -295,7 +510,7 @@
 
         function viewActivityFiles(activityIndex) {
             if (!activitiesData[activityIndex]) {
-                alert('無法獲取活動數據');
+                alert('Unable to get activity data');
                 return;
             }
 
@@ -305,19 +520,19 @@
 
             if (!container) return;
 
-            // 点击同一条记录时可展开/收起
+            // Toggle expand/collapse on click
             if (!container.classList.contains('hidden')) {
                 container.classList.add('hidden');
                 return;
             }
 
             if (filePaths.length === 0) {
-                alert('該活動沒有上傳文件');
+                alert('No files uploaded for this activity');
                 return;
             }
 
             container.innerHTML = filePaths.map(filename => {
-                const fileUrl = `http://127.0.0.1:3000/uploads/${encodeURIComponent(filename)}`;
+                const fileUrl = `${API_BASE}/uploads/${encodeURIComponent(filename)}`;
                 const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filename);
                 const isVideo = /\.(mp4|mov|avi|webm)$/i.test(filename);
 
@@ -364,7 +579,7 @@
 
         async function loadUserProgress() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/user-progress');
+                const response = await fetch(`${API_BASE}/api/admin/user-progress`);
                 const data = await response.json();
                 const container = document.getElementById('users-progress-list');
 
@@ -373,7 +588,7 @@
                         const percent = Math.round((user.completedCount / TASK_COUNT) * 100);
                         const completedTasks = user.completedTasks.length > 0
                             ? user.completedTasks.map(t => `<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">T${t}</span>`).join(' ')
-                            : '<span class="text-gray-400 text-sm">尚未提交</span>';
+                            : '<span class="text-gray-400 text-sm">No submissions yet</span>';
 
                         return `
                             <div class="border rounded-lg p-4">
@@ -383,8 +598,8 @@
                                         <p class="text-sm text-gray-500">${user.userEmail}</p>
                                     </div>
                                     <div class="text-sm text-gray-600">
-                                        <p>完成度：${user.completedCount}/${TASK_COUNT} (${percent}%)</p>
-                                        <p>最近提交：${user.lastSubmittedAt ? formatDateTime(user.lastSubmittedAt) : '—'}</p>
+                                        <p>Completion: ${user.completedCount}/${TASK_COUNT} (${percent}%)</p>
+                                        <p>Last submission: ${user.lastSubmittedAt ? formatDateTime(user.lastSubmittedAt) : '—'}</p>
                                     </div>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded h-2 mb-3">
@@ -392,23 +607,23 @@
                                 </div>
                                 <div class="flex flex-wrap gap-2 mb-3">${completedTasks}</div>
                                 <button data-email="${user.userEmail}" onclick="jumpToUserActivities(this.dataset.email)" class="text-sm text-brand-orange hover:underline">
-                                    查看該用戶提交 →
+                                    View this user's submissions →
                                 </button>
                             </div>
                         `;
                     }).join('');
                 } else {
-                    container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無用戶進度數據</p>';
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No user progress data</p>';
                 }
             } catch (error) {
-                console.error('加載用戶進度失敗:', error);
-                document.getElementById('users-progress-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
+                console.error('Failed to load user progress:', error);
+                document.getElementById('users-progress-list').innerHTML = '<p class="text-red-500 text-center py-8">Failed to load</p>';
             }
         }
 
         async function loadTaskOverview() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/task-overview');
+                const response = await fetch(`${API_BASE}/api/admin/task-overview`);
                 const data = await response.json();
                 const container = document.getElementById('tasks-overview-list');
 
@@ -421,28 +636,28 @@
                                     <p class="text-sm text-gray-600 mt-1">${task.taskTitle}</p>
                                 </div>
                                 <div class="text-sm text-gray-600">
-                                    <p>提交數：${task.submissionCount}</p>
-                                    <p>參與人數：${task.userCount}</p>
-                                    <p>最近提交：${task.lastSubmittedAt ? formatDateTime(task.lastSubmittedAt) : '—'}</p>
+                                    <p>Submissions: ${task.submissionCount}</p>
+                                    <p>Participants: ${task.userCount}</p>
+                                    <p>Last submission: ${task.lastSubmittedAt ? formatDateTime(task.lastSubmittedAt) : '—'}</p>
                                 </div>
                             </div>
                             <button onclick="jumpToTaskActivities(${task.taskId})" class="mt-3 text-sm text-brand-orange hover:underline">
-                                查看此任務所有提交 →
+                                View all submissions for this task →
                             </button>
                         </div>
                     `).join('');
                 } else {
-                    container.innerHTML = '<p class="text-gray-500 text-center py-8">暫無任務統計數據</p>';
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No task statistics data</p>';
                 }
             } catch (error) {
-                console.error('加載任務統計失敗:', error);
-                document.getElementById('tasks-overview-list').innerHTML = '<p class="text-red-500 text-center py-8">加載失敗</p>';
+                console.error('Failed to load task statistics:', error);
+                document.getElementById('tasks-overview-list').innerHTML = '<p class="text-red-500 text-center py-8">Failed to load</p>';
             }
         }
 
         async function loadAllFiles() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/api/admin/all-files');
+                const response = await fetch(`${API_BASE}/api/admin/all-files`);
                 const data = await response.json();
                 const gridContainer = document.getElementById('files-grid');
 
@@ -451,11 +666,11 @@
                     renderFiles(filesData);
                 } else {
                     filesData = [];
-                    gridContainer.innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">暫無上傳文件</p>';
+                    gridContainer.innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">No uploaded files</p>';
                 }
             } catch (error) {
-                console.error('加載文件失敗:', error);
-                document.getElementById('files-grid').innerHTML = '<p class="text-red-500 text-center py-8 col-span-full">加載失敗</p>';
+                console.error('Failed to load files:', error);
+                document.getElementById('files-grid').innerHTML = '<p class="text-red-500 text-center py-8 col-span-full">Failed to load</p>';
             }
         }
 
@@ -468,9 +683,9 @@
 
                 return `
                     <div class="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer"
-                         onclick="window.open('http://127.0.0.1:3000/uploads/${file.filename}', '_blank')">
+                         onclick="window.open('${API_BASE}/uploads/${file.filename}', '_blank')">
                         ${isImage ? `
-                            <img src="http://127.0.0.1:3000/uploads/${file.filename}" class="w-full h-48 object-cover rounded-lg mb-2" alt="${file.filename}">
+                            <img src="${API_BASE}/uploads/${file.filename}" class="w-full h-48 object-cover rounded-lg mb-2" alt="${file.filename}">
                         ` : isVideo ? `
                             <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 flex items-center justify-center"><span class="text-6xl">🎥</span></div>
                         ` : `
@@ -500,7 +715,7 @@
             if (filteredFiles.length > 0) {
                 renderFiles(filteredFiles);
             } else {
-                document.getElementById('files-grid').innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">🔍 沒有找到匹配文件</p>';
+                document.getElementById('files-grid').innerHTML = '<p class="text-gray-500 text-center py-8 col-span-full">🔍 No matching files found</p>';
             }
         }
     </script>
