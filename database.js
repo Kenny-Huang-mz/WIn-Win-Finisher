@@ -53,6 +53,17 @@ if (!hasTaskIdColumn) {
   db.exec('ALTER TABLE activities ADD COLUMN task_id INTEGER');
 }
 
+// 兼容升级：为 users 增加 10 任务里程碑邮件字段
+const userColumns = db.prepare("PRAGMA table_info(users)").all();
+const hasTenTaskNotified = userColumns.some(col => col.name === 'ten_task_notified');
+const hasTenTaskNotifiedAt = userColumns.some(col => col.name === 'ten_task_notified_at');
+if (!hasTenTaskNotified) {
+  db.exec('ALTER TABLE users ADD COLUMN ten_task_notified INTEGER DEFAULT 0');
+}
+if (!hasTenTaskNotifiedAt) {
+  db.exec('ALTER TABLE users ADD COLUMN ten_task_notified_at DATETIME');
+}
+
 // 创建用户支付状态表
 db.exec(`
   CREATE TABLE IF NOT EXISTS user_payments (
@@ -90,6 +101,27 @@ db.exec(`
   )
 `);
 
+// 创建每个任务的评分标准（AI 阅卷 prompt）
+db.exec(`
+  CREATE TABLE IF NOT EXISTS task_scoring_prompts (
+    task_id INTEGER PRIMARY KEY,
+    prompt TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// 创建活动评分结果表
+db.exec(`
+  CREATE TABLE IF NOT EXISTS activity_grades (
+    activity_id INTEGER PRIMARY KEY,
+    score REAL,
+    feedback TEXT,
+    raw_response TEXT,
+    graded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE
+  )
+`);
+
 // 创建索引以提高查询性能
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -100,7 +132,34 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_user_payments_status ON user_payments(payment_status);
   CREATE INDEX IF NOT EXISTS idx_payment_orders_user_email ON payment_orders(user_email);
   CREATE INDEX IF NOT EXISTS idx_payment_orders_status ON payment_orders(status);
+  CREATE INDEX IF NOT EXISTS idx_activity_grades_graded_at ON activity_grades(graded_at);
 `);
+
+// 初始化 20 个任务的默认评分标准（若不存在则补齐）
+const defaultPromptTemplate = (taskId) => `你是 IG Finisher Program 的阅卷员。请只根据学员提交的活动描述进行评分。
+
+任务编号：Task ${taskId}
+
+评分要求：
+1. 按 1-10 分评分（10 分最高）。
+2. 重点关注：任务完成度、互动真实性、反思与收获。
+3. 反馈应具体、简短、可执行，使用中文。
+4. 只输出 JSON，不要输出其他内容。
+
+输出格式：
+{"score": 1-10 之间的数字, "feedback": "简短中文评语"}`;
+
+const seedPromptStmt = db.prepare(`
+  INSERT OR IGNORE INTO task_scoring_prompts (task_id, prompt, updated_at)
+  VALUES (?, ?, CURRENT_TIMESTAMP)
+`);
+
+const seedPromptsTx = db.transaction(() => {
+  for (let taskId = 1; taskId <= 20; taskId++) {
+    seedPromptStmt.run(taskId, defaultPromptTemplate(taskId));
+  }
+});
+seedPromptsTx();
 
 // 回填历史数据里的 task_id（标题格式：Task N: ...）
 const legacyActivities = db.prepare(`

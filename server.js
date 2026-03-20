@@ -1,4 +1,17 @@
-require('dotenv').config();
+try {
+    require('dotenv').config();
+} catch (error) {
+    if (typeof process.loadEnvFile === 'function') {
+        try {
+            process.loadEnvFile('.env');
+            console.warn('[startup] dotenv 未安装，已使用 Node 内置方式加载 .env。');
+        } catch (loadError) {
+            console.warn('[startup] 无法加载 .env，继续使用系统环境变量。');
+        }
+    } else {
+        console.warn('[startup] dotenv 未安装，跳过 .env 加载，继续使用系统环境变量。');
+    }
+}
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -782,7 +795,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
         // 发送邮件通知用户
         try {
             // 获取用户信息
-            const userStmt = db.prepare('SELECT first_name, last_name, email FROM users WHERE email = ?');
+            const userStmt = db.prepare('SELECT first_name, last_name, email, ten_task_notified FROM users WHERE email = ?');
             const user = userStmt.get(userEmail);
             
             if (user) {
@@ -865,6 +878,57 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
                 
                 await transporter.sendMail(mailOptions);
                 console.log(`✅ 活动提交确认邮件已发送至: ${userEmail}`);
+
+                // 当用户完成任意 10 个任务时，自动发送里程碑邮件（仅一次）
+                const completionRow = db.prepare(`
+                    SELECT COUNT(DISTINCT task_id) AS completed_count
+                    FROM activities
+                    WHERE user_email = ? AND task_id IS NOT NULL
+                `).get(userEmail);
+
+                const completedCount = completionRow ? completionRow.completed_count : 0;
+                const alreadyNotified = Number(user.ten_task_notified) === 1;
+
+                if (!alreadyNotified && completedCount >= 10) {
+                    const milestoneMailOptions = {
+                        from: '"跨代傳承 Intergenerational Lineage" <s230026055@mail.bnbu.edu.cn>',
+                        to: userEmail,
+                        subject: '🏅 恭喜完成 10 个任务！ - IG Finisher Program',
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                                <div style="background-color: #FF6B35; padding: 28px; text-align: center; border-radius: 10px 10px 0 0;">
+                                    <h1 style="color: white; margin: 0; font-size: 28px;">🏅 恭喜達成里程碑！</h1>
+                                </div>
+                                <div style="background-color: white; padding: 28px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                                    <p style="font-size: 16px; color: #333; line-height: 1.7;">
+                                        親愛的 <strong style="color: #FF6B35;">${userName}</strong>，您好！
+                                    </p>
+                                    <p style="font-size: 16px; color: #333; line-height: 1.7;">
+                                        恭喜您已完成 <strong>${completedCount}</strong> 個跨代任務（已達 10 個任務里程碑）！
+                                        非常感謝您的持續參與與投入。
+                                    </p>
+                                    <div style="background-color: #FFF8F0; padding: 16px; border-left: 4px solid #FF6B35; margin: 18px 0;">
+                                        <p style="margin: 0; color: #444; line-height: 1.7;">
+                                            您的每一次互動，都在促進世代交流與理解。<br>
+                                            歡迎繼續完成更多任務，分享更多溫暖故事。
+                                        </p>
+                                    </div>
+                                    <p style="font-size: 13px; color: #888; text-align: center; margin-top: 20px;">
+                                        此郵件由系統自動發送，請勿回覆。
+                                    </p>
+                                </div>
+                            </div>
+                        `
+                    };
+
+                    await transporter.sendMail(milestoneMailOptions);
+                    db.prepare(`
+                        UPDATE users
+                        SET ten_task_notified = 1, ten_task_notified_at = CURRENT_TIMESTAMP
+                        WHERE email = ?
+                    `).run(userEmail);
+                    console.log(`🏅 10任务里程碑邮件已发送至: ${userEmail}`);
+                }
             }
         } catch (emailError) {
             console.error('发送邮件失败:', emailError);
