@@ -157,19 +157,7 @@
         <aside class="w-full md:w-1/4">
             <div class="sticky top-24">
                 <ul class="space-y-1 text-gray-600 border-l-2 border-gray-100">
-                    <li onclick="switchTab('intro')" id="tab-intro" class="sidebar-item active px-4 py-3 text-lg font-medium">
-                        About Us
-                    </li>
-                    <li onclick="switchTab('mission')" id="tab-mission" class="sidebar-item px-4 py-3 text-lg font-medium">
-                        Mission, Vision & Values
-                    </li>
-                    <li onclick="switchTab('structure')" id="tab-structure" class="sidebar-item px-4 py-3 text-lg font-medium">
-                        Organization Structure
-                    </li>
-                    <li onclick="switchTab('history')" id="tab-history" class="sidebar-item px-4 py-3 text-lg font-medium">
-                        Our History
-                    </li>
-                    <li onclick="checkLoginAndNavigate('winwin')" id="tab-winwin" class="sidebar-item px-4 py-3 text-lg font-medium bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100">
+                    <li onclick="checkLoginAndNavigate('winwin')" id="tab-winwin" class="sidebar-item active px-4 py-3 text-lg font-medium bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100">
                         <span class="text-brand-orange font-bold">IG Finisher Program</span>
                         <span class="text-xs text-gray-500 block">Intergenerational Activities</span>
                     </li>
@@ -316,7 +304,7 @@
 
                 <!-- Upload Form -->
                 <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-                    <h3 class="text-xl font-bold text-brand-dark mb-6">📸 Share Your Activity</h3>
+                    <h3 class="text-xl font-bold text-brand-dark mb-6">Submit your task-related evidence</h3>
                     <form id="winwin-form" onsubmit="submitActivity(event)" class="space-y-6">
                         <!-- Task Selection -->
                         <div>
@@ -330,7 +318,7 @@
 
                         <!-- Activity Description -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Activity Description / Reflection *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Activity Description / Reflection (Must Fill-in)</label>
                             <textarea id="activity-description" required rows="4"
                                       placeholder="Describe how you completed this task and your feelings..."
                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none resize-none"></textarea>
@@ -345,7 +333,7 @@
                                 <label for="activity-files" class="cursor-pointer">
                                     <div class="text-brand-orange text-4xl mb-2">📁</div>
                                     <p class="text-gray-600 font-medium">Click to Select Files</p>
-                                    <p class="text-sm text-gray-500 mt-2">Supports images (JPG, PNG) and videos (MP4, MOV)</p>
+                                    <p class="text-sm text-gray-500 mt-2">Supports images and videos (no more than 50MB totally)</p>
                                     <p class="text-sm text-brand-orange font-medium mt-1">✨ Upload up to 5 files</p>
                                     <p class="text-xs text-gray-400 mt-2">💡 You can add different files by clicking multiple times</p>
                                 </label>
@@ -448,7 +436,7 @@
                                 <input type="checkbox" class="text-brand-orange focus:ring-brand-orange border-gray-300 rounded">
                                 <span class="ml-2 text-gray-600">Remember me</span>
                             </label>
-                            <a href="#" class="text-brand-orange hover:underline">Forgot password?</a>
+                            <button type="button" onclick="switchModalMode('reset')" class="text-brand-orange hover:underline">Forgot password?</button>
                         </div>
                         <button type="submit" class="w-full bg-brand-orange text-white py-2.5 rounded font-bold hover:bg-orange-600 transition shadow-md">
                             Login Now
@@ -472,12 +460,16 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                                <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
+                                <input id="register-last-name" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                                <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
+                                <input id="register-first-name" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
                             </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                            <input id="register-student-id" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="Enter your student ID">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -504,6 +496,41 @@
                 <div class="mt-6 text-center text-sm text-gray-600">
                     Already have an account? 
                     <button onclick="switchModalMode('login')" class="text-brand-orange font-bold hover:underline">Login here</button>
+                </div>
+            </div>
+
+            <div id="reset-form" class="p-8 hidden">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-brand-orange">Reset Password</h3>
+                    <p class="text-sm text-gray-500 mt-2">Enter your email, verification code, and a new password</p>
+                </div>
+                <form onsubmit="handleResetPassword(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input id="reset-email" type="email" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="example@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+                            <div class="flex gap-2">
+                                <input id="reset-verification-code" type="text" required maxlength="5" pattern="[0-9]{5}" placeholder="Enter 5-digit code" class="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition">
+                                <button type="button" id="send-reset-code-btn" onclick="sendResetCode()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition whitespace-nowrap font-medium">
+                                    Send Code
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <input id="reset-new-password" type="password" required class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="Enter your new password">
+                        </div>
+                        <button type="submit" class="w-full bg-brand-orange text-white py-2.5 rounded font-bold hover:bg-orange-600 transition shadow-md">
+                            Reset Password
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-6 text-center text-sm text-gray-600">
+                    Remembered your password?
+                    <button onclick="switchModalMode('login')" class="text-brand-orange font-bold hover:underline">Back to login</button>
                 </div>
             </div>
         </div>
@@ -536,6 +563,7 @@
         const modal = document.getElementById('auth-modal');
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
+        const resetForm = document.getElementById('reset-form');
 
         function openModal(type) {
             modal.classList.remove('hidden');
@@ -550,9 +578,15 @@
             if (type === 'login') {
                 loginForm.classList.remove('hidden');
                 registerForm.classList.add('hidden');
-            } else {
+                resetForm.classList.add('hidden');
+            } else if (type === 'register') {
                 loginForm.classList.add('hidden');
                 registerForm.classList.remove('hidden');
+                resetForm.classList.add('hidden');
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.add('hidden');
+                resetForm.classList.remove('hidden');
             }
         }
 
@@ -565,21 +599,22 @@
             const originalText = btn.innerText;
             
             // Get Inputs
-            const inputs = form.querySelectorAll('input');
             let payload = {};
 
             if (type === 'login') {
+                const inputs = form.querySelectorAll('input');
                 payload = {
                     email: inputs[0].value,
                     password: inputs[1].value
                 };
             } else {
                 payload = {
-                    lastName: inputs[0].value,
-                    firstName: inputs[1].value,
-                    email: inputs[2].value,
-                    verificationCode: inputs[3].value,
-                    password: inputs[4].value
+                    lastName: document.getElementById('register-last-name').value,
+                    firstName: document.getElementById('register-first-name').value,
+                    studentId: document.getElementById('register-student-id').value,
+                    email: document.getElementById('register-email').value,
+                    verificationCode: document.getElementById('verification-code').value,
+                    password: form.querySelector('input[type=\"password\"]').value
                 };
             }
 
@@ -734,6 +769,7 @@
 
         // Send verification code
         let countdownTimer = null;
+        let resetCountdownTimer = null;
         async function sendVerificationCode() {
             const emailInput = document.getElementById('register-email');
             const sendBtn = document.getElementById('send-code-btn');
@@ -791,6 +827,110 @@
                 alert('Cannot connect to server');
                 sendBtn.innerText = originalText;
                 sendBtn.disabled = false;
+            }
+        }
+
+        async function sendResetCode() {
+            const emailInput = document.getElementById('reset-email');
+            const sendBtn = document.getElementById('send-reset-code-btn');
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                alert('Please enter your email first');
+                emailInput.focus();
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                emailInput.focus();
+                return;
+            }
+
+            sendBtn.disabled = true;
+            const originalText = sendBtn.innerText;
+            sendBtn.innerText = 'Sending...';
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/api/send-reset-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    let countdown = 30;
+                    sendBtn.innerText = `${countdown}s`;
+
+                    resetCountdownTimer = setInterval(() => {
+                        countdown--;
+                        if (countdown > 0) {
+                            sendBtn.innerText = `${countdown}s`;
+                        } else {
+                            clearInterval(resetCountdownTimer);
+                            sendBtn.innerText = originalText;
+                            sendBtn.disabled = false;
+                        }
+                    }, 1000);
+                } else {
+                    alert(data.message || 'Failed to send reset code');
+                    sendBtn.innerText = originalText;
+                    sendBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Unable to connect to server');
+                sendBtn.innerText = originalText;
+                sendBtn.disabled = false;
+            }
+        }
+
+        async function handleResetPassword(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            const payload = {
+                email: document.getElementById('reset-email').value.trim(),
+                verificationCode: document.getElementById('reset-verification-code').value.trim(),
+                newPassword: document.getElementById('reset-new-password').value
+            };
+
+            btn.innerText = 'Processing...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert((data && data.message) || `Operation failed (HTTP status: ${response.status})`);
+                    return;
+                }
+
+                if (data && data.success) {
+                    alert(data.message || 'Password reset successfully');
+                    form.reset();
+                    switchModalMode('login');
+                } else {
+                    alert((data && data.message) || 'Password reset failed');
+                }
+            } catch (error) {
+                console.error('Reset password error:', error);
+                alert(`Failed to connect to backend!\nError: ${error.message}`);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
 

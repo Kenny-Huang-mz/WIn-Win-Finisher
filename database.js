@@ -13,6 +13,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    student_id TEXT,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     is_admin INTEGER DEFAULT 0,
@@ -55,8 +56,12 @@ if (!hasTaskIdColumn) {
 
 // 兼容升级：为 users 增加 10 任务里程碑邮件字段
 const userColumns = db.prepare("PRAGMA table_info(users)").all();
+const hasStudentIdColumn = userColumns.some(col => col.name === 'student_id');
 const hasTenTaskNotified = userColumns.some(col => col.name === 'ten_task_notified');
 const hasTenTaskNotifiedAt = userColumns.some(col => col.name === 'ten_task_notified_at');
+if (!hasStudentIdColumn) {
+  db.exec('ALTER TABLE users ADD COLUMN student_id TEXT');
+}
 if (!hasTenTaskNotified) {
   db.exec('ALTER TABLE users ADD COLUMN ten_task_notified INTEGER DEFAULT 0');
 }
@@ -125,6 +130,7 @@ db.exec(`
 // 创建索引以提高查询性能
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_users_student_id_unique ON users(student_id) WHERE student_id IS NOT NULL;
   CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email);
   CREATE INDEX IF NOT EXISTS idx_activities_user_email ON activities(user_email);
   CREATE INDEX IF NOT EXISTS idx_activities_task_id ON activities(task_id);

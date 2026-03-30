@@ -22,8 +22,8 @@ console.log(`找到 ${users.length} 个用户需要迁移\n`);
 
 // 准备插入语句
 const insertStmt = db.prepare(`
-    INSERT INTO users (first_name, last_name, email, password_hash, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO users (first_name, last_name, student_id, email, password_hash, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
 `);
 
 let successCount = 0;
@@ -48,6 +48,7 @@ for (const user of users) {
         insertStmt.run(
             user.firstName,
             user.lastName,
+            user.studentId || null,
             user.email,
             passwordHash,
             user.createdAt

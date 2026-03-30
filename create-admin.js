@@ -20,18 +20,22 @@ try {
         console.log('管理员账户已存在！');
         
         // 更新为管理员权限
-        db.prepare('UPDATE users SET is_admin = 1 WHERE email = ?').run(ADMIN_EMAIL);
+        db.prepare(`
+            UPDATE users
+            SET is_admin = 1, student_id = COALESCE(student_id, 'ADMIN')
+            WHERE email = ?
+        `).run(ADMIN_EMAIL);
         console.log('已更新管理员权限');
     } else {
         // 创建新管理员账户
         const passwordHash = bcrypt.hashSync(ADMIN_PASSWORD, SALT_ROUNDS);
         
         const stmt = db.prepare(`
-            INSERT INTO users (first_name, last_name, email, password_hash, is_admin)
-            VALUES (?, ?, ?, ?, 1)
+            INSERT INTO users (first_name, last_name, student_id, email, password_hash, is_admin)
+            VALUES (?, ?, ?, ?, ?, 1)
         `);
         
-        const result = stmt.run(ADMIN_FIRSTNAME, ADMIN_LASTNAME, ADMIN_EMAIL, passwordHash);
+        const result = stmt.run(ADMIN_FIRSTNAME, ADMIN_LASTNAME, 'ADMIN', ADMIN_EMAIL, passwordHash);
         
         console.log('✅ 管理员账户创建成功！');
         console.log(`邮箱: ${ADMIN_EMAIL}`);

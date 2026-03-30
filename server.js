@@ -63,6 +63,7 @@ const upload = multer({
 
 // 验证码存储 (内存中，key: email, value: {code, expiry})
 const verificationCodes = new Map();
+const passwordResetCodes = new Map();
 
 // 固定20个跨代任务（用于活动提交校验）
 const INTERGENERATIONAL_TASKS = [
@@ -317,13 +318,18 @@ function findUserByEmail(email) {
     return stmt.get(email);
 }
 
+function findUserByStudentId(studentId) {
+    const stmt = db.prepare('SELECT * FROM users WHERE student_id = ?');
+    return stmt.get(studentId);
+}
+
 // 创建新用户
-function createUser(firstName, lastName, email, passwordHash) {
+function createUser(firstName, lastName, studentId, email, passwordHash) {
     const stmt = db.prepare(`
-        INSERT INTO users (first_name, last_name, email, password_hash)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO users (first_name, last_name, student_id, email, password_hash)
+        VALUES (?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(firstName, lastName, email, passwordHash);
+    const result = stmt.run(firstName, lastName, studentId, email, passwordHash);
     return result.lastInsertRowid;
 }
 
@@ -393,12 +399,63 @@ app.post('/api/send-verification-code', (req, res) => {
     res.json({ success: true, message: '驗證碼已發送（請查看控制台）' });
 });
 
+app.post('/api/send-reset-code', (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: '請提供電子郵件' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: '請輸入有效的電子郵件地址' });
+    }
+
+    const user = findUserByEmail(email);
+    if (!user) {
+        return res.json({ success: true, message: '如該電子郵件已註冊，重設驗證碼將發送至您的郵箱' });
+    }
+
+    const code = generateVerificationCode();
+    const expiry = Date.now() + 10 * 60 * 1000;
+    passwordResetCodes.set(email, { code, expiry });
+
+    const logMessage = `\n[${new Date().toLocaleString('zh-CN')}][RESET PASSWORD]\n邮箱: ${email}\n验证码: ${code}\n有效期至: ${new Date(expiry).toLocaleString('zh-CN')}\n${'='.repeat(40)}\n`;
+    fs.appendFileSync(path.join(__dirname, 'verification-codes.log'), logMessage);
+
+    const mailOptions = {
+        from: transporter.options.auth.user,
+        to: email,
+        subject: '【跨代傳承】密碼重設驗證碼',
+        html: `
+            <h2>密碼重設請求</h2>
+            <p>您的密碼重設驗證碼是：<strong style="font-size: 24px; color: #F58A42;">${code}</strong></p>
+            <p>驗證碼將在 10 分鐘內有效。如非本人操作，請忽略此郵件。</p>
+        `
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('重設密碼邮件发送失败:', error);
+            return;
+        }
+        console.log('重設密碼邮件发送成功:', info.messageId);
+    });
+
+    res.json({ success: true, message: '如該電子郵件已註冊，重設驗證碼將發送至您的郵箱' });
+});
+
 // 路由：注册
 app.post('/api/register', (req, res) => {
-    const { firstName, lastName, email, password, verificationCode } = req.body;
+    const { firstName, lastName, studentId, email, password, verificationCode } = req.body;
 
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !firstName || !lastName || !studentId) {
         return res.status(400).json({ success: false, message: '所有欄位都是必填的' });
+    }
+
+    const normalizedStudentId = String(studentId).trim();
+    if (!normalizedStudentId) {
+        return res.status(400).json({ success: false, message: '請輸入 Student ID' });
     }
 
     if (!verificationCode) {
@@ -432,17 +489,60 @@ app.post('/api/register', (req, res) => {
         return res.status(409).json({ success: false, message: '該電子郵件已被註冊' });
     }
 
+    const existingStudentId = findUserByStudentId(normalizedStudentId);
+    if (existingStudentId) {
+        return res.status(409).json({ success: false, message: '該 Student ID 已被註冊' });
+    }
+
     // 加密密码
     const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
 
     // 创建新用户
     try {
-        const userId = createUser(firstName, lastName, email, passwordHash);
+        const userId = createUser(firstName, lastName, normalizedStudentId, email, passwordHash);
         console.log(`新用户注册: ${email} (ID: ${userId})`);
-        res.json({ success: true, message: '註冊成功', user: { firstName, lastName, email } });
+        res.json({ success: true, message: '註冊成功', user: { firstName, lastName, studentId: normalizedStudentId, email } });
     } catch (error) {
         console.error('注册失败:', error);
         res.status(500).json({ success: false, message: '註冊失敗，請稍後再試' });
+    }
+});
+
+app.post('/api/reset-password', (req, res) => {
+    const { email, verificationCode, newPassword } = req.body;
+
+    if (!email || !verificationCode || !newPassword) {
+        return res.status(400).json({ success: false, message: '請提供完整資訊' });
+    }
+
+    const user = findUserByEmail(email);
+    if (!user) {
+        return res.status(400).json({ success: false, message: '該電子郵件尚未註冊' });
+    }
+
+    const storedData = passwordResetCodes.get(email);
+    if (!storedData) {
+        return res.status(400).json({ success: false, message: '請先獲取重設驗證碼' });
+    }
+
+    if (Date.now() > storedData.expiry) {
+        passwordResetCodes.delete(email);
+        return res.status(400).json({ success: false, message: '重設驗證碼已過期，請重新獲取' });
+    }
+
+    if (storedData.code !== verificationCode) {
+        return res.status(400).json({ success: false, message: '重設驗證碼錯誤' });
+    }
+
+    const passwordHash = bcrypt.hashSync(newPassword, SALT_ROUNDS);
+
+    try {
+        db.prepare('UPDATE users SET password_hash = ? WHERE email = ?').run(passwordHash, email);
+        passwordResetCodes.delete(email);
+        res.json({ success: true, message: '密碼已成功重設，請使用新密碼登入' });
+    } catch (error) {
+        console.error('重設密碼失败:', error);
+        res.status(500).json({ success: false, message: '重設密碼失敗，請稍後再試' });
     }
 });
 
@@ -465,6 +565,7 @@ app.post('/api/login', (req, res) => {
             user: { 
                 firstName: user.first_name,  // 注意：数据库字段是 snake_case
                 lastName: user.last_name, 
+                studentId: user.student_id,
                 email: user.email,
                 isAdmin: user.is_admin === 1  // 管理员标识
             } 
@@ -812,7 +913,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
                 const mailOptions = {
                     from: '"代代共榮 Generation Co-prosperity" <s230026055@mail.bnbu.edu.cn>',
                     to: userEmail,
-                    subject: '✅ 活動記錄已成功提交 - IG Finisher Program',
+                    subject: '✅ 活動記錄已成功提交 - Win-Win Finisher Program',
                     html: `
                         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                             <div style="background-color: #FF6B35; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -825,7 +926,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
                                 </p>
                                 
                                 <p style="font-size: 16px; color: #333; line-height: 1.6;">
-                                    感謝您參與 <strong>IG Finisher Program</strong> 活動！您的活動記錄已成功提交並保存。
+                                    感謝您參與 <strong> Win-Win Finisher Program</strong> 活動！您的活動記錄已成功提交並保存。
                                 </p>
                                 
                                 <div style="background-color: #FFF8F0; padding: 20px; border-left: 4px solid #FF6B35; margin: 20px 0;">
@@ -1054,10 +1155,11 @@ app.get('/api/admin/all-activities', (req, res) => {
             const likeKeyword = `%${keyword}%`;
             conditions.push(`(
                 LOWER(a.user_email) LIKE ?
+                OR LOWER(COALESCE(u.student_id, '')) LIKE ?
                 OR LOWER(COALESCE(u.first_name, '') || COALESCE(u.last_name, '')) LIKE ?
                 OR LOWER(COALESCE(u.last_name, '') || COALESCE(u.first_name, '')) LIKE ?
             )`);
-            params.push(likeKeyword, likeKeyword, likeKeyword);
+            params.push(likeKeyword, likeKeyword, likeKeyword, likeKeyword);
         }
 
         if (hasTaskIdFilter) {
@@ -1076,6 +1178,7 @@ app.get('/api/admin/all-activities', (req, res) => {
                 a.file_paths,
                 a.file_count,
                 a.created_at,
+                u.student_id,
                 u.first_name,
                 u.last_name
             FROM activities a
@@ -1118,7 +1221,7 @@ app.get('/api/admin/all-activities', (req, res) => {
 app.get('/api/admin/user-progress', (req, res) => {
     try {
         const usersStmt = db.prepare(`
-            SELECT id, first_name, last_name, email
+            SELECT id, first_name, last_name, student_id, email
             FROM users
             WHERE is_admin = 0
             ORDER BY created_at DESC
@@ -1154,6 +1257,7 @@ app.get('/api/admin/user-progress', (req, res) => {
             return {
                 userEmail: user.email,
                 userName: `${user.last_name || ''}${user.first_name || ''}` || user.email,
+                studentId: user.student_id || null,
                 completedCount: progress.completedCount,
                 completedTasks: progress.completedTasks,
                 lastSubmittedAt: progress.lastSubmittedAt
