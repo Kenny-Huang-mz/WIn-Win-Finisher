@@ -426,7 +426,7 @@ app.post('/api/send-reset-code', (req, res) => {
     const mailOptions = {
         from: transporter.options.auth.user,
         to: email,
-        subject: '【跨代傳承】密碼重設驗證碼',
+        subject: '【跨代共融圓滿成就者計劃】密碼重設驗證碼',
         html: `
             <h2>密碼重設請求</h2>
             <p>您的密碼重設驗證碼是：<strong style="font-size: 24px; color: #F58A42;">${code}</strong></p>
@@ -992,7 +992,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
 
                 if (!alreadyNotified && completedCount >= 10) {
                     const milestoneMailOptions = {
-                        from: '"跨代傳承 Intergenerational Lineage" <s230026055@mail.bnbu.edu.cn>',
+                        from: '"跨代共融圓滿成就者計劃 Intergenerational Lineage" <s230026055@mail.bnbu.edu.cn>',
                         to: userEmail,
                         subject: '🏅 恭喜完成 10 个任务！ - IG Finisher Program',
                         html: `
