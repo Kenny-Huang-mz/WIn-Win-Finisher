@@ -378,9 +378,9 @@ app.post('/api/send-verification-code', (req, res) => {
     const mailOptions = {
         from: transporter.options.auth.user,  // 使用配置的发件邮箱
         to: email,
-        subject: '【代代共荣】註冊驗證碼',
+        subject: '【跨代傳承】註冊驗證碼',
         html: `
-            <h2>歡迎註冊代代共荣</h2>
+            <h2>歡迎註冊跨代傳承</h2>
             <p>您的驗證碼是：<strong style="font-size: 24px; color: #F58A42;">${code}</strong></p>
             <p>驗證碼將在 2 分鐘內有效，請儘快完成註冊。</p>
         `
@@ -911,7 +911,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
                 });
                 
                 const mailOptions = {
-                    from: '"代代共榮 Generation Co-prosperity" <s230026055@mail.bnbu.edu.cn>',
+                    from: '"跨代傳承 Intergenerational Lineage" <s230026055@mail.bnbu.edu.cn>',
                     to: userEmail,
                     subject: '✅ 活動記錄已成功提交 - Win-Win Finisher Program',
                     html: `
@@ -970,7 +970,7 @@ app.post('/api/activities', upload.array('files', 5), async (req, res) => {
                                 </p>
                                 
                                 <p style="font-size: 14px; color: #999; text-align: center; margin-top: 20px;">
-                                    © 2024 代代共榮 Generation Co-prosperity. All rights reserved.
+                                    © 2024 跨代傳承 Intergenerational Lineage. All rights reserved.
                                 </p>
                             </div>
                         </div>

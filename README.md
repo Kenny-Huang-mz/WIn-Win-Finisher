@@ -1,4 +1,4 @@
-# 代代共荣 Generation Co-prosperity
+# 跨代傳承 Intergenerational Lineage
 
 ## 项目介绍
 这是一个跨代共融的非牟利组织官方网站，包含会员注册、登录系统及邮箱验证功能。
@@ -152,7 +152,7 @@ node server.js
 
 ## 文件结构
 ```
-Generation Co-prosperity/
+Intergenerational Lineage/
 ├── index.html          # 前端页面
 ├── server.js           # 后端 API 服务器
 ├── users.json          # 用户数据存储（自动生成）
@@ -182,4 +182,4 @@ Generation Co-prosperity/
 ## 联系方式
 如有问题或建议，欢迎联系开发团队。
 
-© 2025 Generation Co-prosperity Limited. All Rights Reserved.
+© 2025 Intergenerational Lineage Limited. All Rights Reserved.
